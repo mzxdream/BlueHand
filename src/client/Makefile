@@ -1,7 +1,7 @@
 CC = g++ -Wall -g
 CFLAGS = `pkg-config --cflags --libs gtkmm-3.0` -std=c++11
 LIBS = -lboost_signals
-OBJS = main.o BlueHandApp.o LoginWnd.o
+OBJS = main.o BlueHandApp.o LoginWnd.o Conf.o Convert.o
 
 all : main
 main : $(OBJS)

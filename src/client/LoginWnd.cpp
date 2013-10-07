@@ -60,8 +60,7 @@ void LoginWnd::OnLoginBtnClicked()
     {
 	m_pLoginBtn->set_label("Logining");
 	m_bLogin = false;
-	m_loginSig(m_pIDEntry->get_text().raw(), m_pPwdEntry->get_text().raw()
-		   , m_pRmbPwdChkBtn->get_active(), m_pAutoLoginChkBtn->get_active());
+	m_loginSig();
     }
     else
     {
@@ -70,4 +69,51 @@ void LoginWnd::OnLoginBtnClicked()
 	m_cancelLoginSig();
     }
 }
-
+const std::string& LoginWnd::UserID() const
+{
+    return m_pIDEntry->get_text().raw();
+}
+void LoginWnd::UserID(const std::string &strUserID)
+{
+    m_pIDEntry->set_text(strUserID);
+}
+const std::string& LoginWnd::UserPwd() const
+{
+    return m_pPwdEntry->get_text().raw();
+}
+void LoginWnd::UserPwd(const std::string &strUserPwd)
+{
+    m_pPwdEntry->set_text(strUserPwd);
+}
+bool LoginWnd::RememberPwd() const
+{
+    return m_pRmbPwdChkBtn->get_active();
+}
+void LoginWnd::RememberPwd(bool bRmbPwd)
+{
+    m_pRmbPwdChkBtn->set_active(bRmbPwd);
+}
+bool LoginWnd::AutoLogin() const
+{
+    return m_pAutoLoginChkBtn->get_active();
+}
+void LoginWnd::AutoLogin(bool bAutoLogin)
+{
+    m_pAutoLoginChkBtn->set_active(bAutoLogin);
+}
+boost::signals2::signal<void ()>& LoginWnd::CloseSignal()
+{
+    return m_closeSig;
+}
+boost::signals2::signal<void ()>& LoginWnd::CancelLoginSignal()
+{
+    return m_cancelLoginSig;
+}
+boost::signals2::signal<void ()>& LoginWnd::LoginSignal()
+{
+    return m_loginSig;
+}
+boost::signals2::signal<void ()>& LoginWnd::SetSignal()
+{
+    return m_setSig;
+}

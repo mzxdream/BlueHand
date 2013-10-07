@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
     Gtk::Main kit(argc, argv);
     do
     {
-	if (!BlueHandApp::Instance().Init(argc, argv))
+	if (!BlueHandApp::Instance().Init())
 	{
 	    std::cerr << "app init failed" << std::endl;
 	    break;

@@ -18,23 +18,26 @@ public:
 public:
     bool Init();
     void Clear();
-    const std::string& GetUserID() const;
-    void SetUserID(const std::string &);
-    const std::string& GetPwd() const;
-    void SetPwd(const std::string &);
-    bool GetRmbPwdChk() const;
-    void SetRmbPwdChk(bool);
-    bool GetAutoLogin() const;
-    void SetAutoLogin(bool);
-public:
-    boost::signals2::signal<void ()> m_closeSig;
-    boost::signals2::signal<void ()> m_cancelLoginSig;
-    boost::signals2::signal<void (const std::string &, const std::string &, bool, bool)> m_loginSig;
-    boost::signals2::signal<void ()> m_setSig;
+    const std::string& UserID() const;
+    void UserID(const std::string &);
+    const std::string& UserPwd() const;
+    void UserPwd(const std::string &);
+    bool RememberPwd() const;
+    void RememberPwd(bool);
+    bool AutoLogin() const;
+    void AutoLogin(bool);
+    boost::signals2::signal<void ()>& CloseSigal();
+    boost::signals2::signal<void ()>& CancelLoginSignal();
+    boost::signals2::signal<void ()>& LoginSignal();
+    boost::signals2::signal<void ()>& SetSignal();
 protected:
     void OnSetBtnClicked();
     void OnLoginBtnClicked();
 protected:
+    boost::signals2::signal<void ()> m_closeSig;
+    boost::signals2::signal<void ()> m_cancelLoginSig;
+    boost::signals2::signal<void ()> m_loginSig;
+    boost::signals2::signal<void ()> m_setSig;
     Glib::RefPtr<Gtk::Builder> m_refBuilder;
     Gtk::Button *m_pLoginBtn;
     Gtk::Button *m_pSetBtn;
