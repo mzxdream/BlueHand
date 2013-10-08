@@ -26,7 +26,7 @@ public:
     void RememberPwd(bool);
     bool AutoLogin() const;
     void AutoLogin(bool);
-    boost::signals2::signal<void ()>& CloseSigal();
+    boost::signals2::signal<void ()>& CloseSignal();
     boost::signals2::signal<void ()>& CancelLoginSignal();
     boost::signals2::signal<void ()>& LoginSignal();
     boost::signals2::signal<void ()>& SetSignal();

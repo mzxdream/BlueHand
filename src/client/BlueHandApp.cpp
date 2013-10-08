@@ -9,38 +9,14 @@ BlueHandApp& BlueHandApp::Instance()
 
 bool BlueHandApp::Init()
 {
-    if (!InitConf())
-    {
-	return false;
-    }
     if (!InitLoginWnd())
     {
 	return false;
     }
     return true;
 }
-bool BlueHandApp::InitConf()
-{
-    return Conf::Init();
-}
-bool BlueHandApp::ReadLoginConf()
-{
-    m_strID = Conf::GetString(CONF_LOGIN, "UserInfo", "ID", "");
-    m_strPwd = Conf::GetString(CONF_LOGIN, "UserInfo", "PWD", "");
-    m_bAutoLogin = Conf::GetBool(CONF_LOGIN, "UserSet", "AutoLogin", false);
-    m_bRmbPwd = Conf::GetBool(CONF_LOGIN, "UserSet", "RmbPwd", false);
-    return true;
-}
-bool BlueHandApp::WriteLoginConf()
-{
-    return true;
-}
 bool BlueHandApp::InitLoginWnd()
 {
-    if (!ReadLoginConf())
-    {
-	return false;
-    }
     Glib::RefPtr<Gtk::Builder> refBuilder = Gtk::Builder::create();
     try
     {
@@ -63,14 +39,18 @@ bool BlueHandApp::InitLoginWnd()
     {
 	return false;
     }
-    m_pLoginWnd->SetUserID(m_strID);
-    m_pLoginWnd->SetPwd(m_strPwd);
-    m_pLoginWnd->SetAutoLogin(m_bAutoLogin);
-    m_pLoginWnd->SetRmbPwdChk(m_bRmbPwd);
-    m_pLoginWnd->m_cancelLoginSig.connect(
+    m_strUserID = Conf::GetString("./conf/login.ini", "userinfo", "userid", "");
+    m_strUserPwd = Conf::GetString("./conf/login.ini", "userinfo", "userpassword", "");
+    m_bAutoLogin = Conf::GetBool("./conf/login.ini", "userset", "autologin", false);
+    m_bRmbPwd = Conf::GetBool("./conf/login.ini", "userset", "rememberpwd", false);
+    m_pLoginWnd->UserID(m_strUserID);
+    m_pLoginWnd->UserPwd(m_strUserPwd);
+    m_pLoginWnd->AutoLogin(m_bAutoLogin);
+    m_pLoginWnd->RememberPwd(m_bRmbPwd);
+    m_pLoginWnd->CancelLoginSignal().connect(
 	boost::bind(&BlueHandApp::OnCancelLogin, this));
-    m_pLoginWnd->m_loginSig.connect(
-	boost::bind(&BlueHandApp::OnLogin, this, _1, _2, _3, _4));
+    m_pLoginWnd->LoginSignal().connect(
+	boost::bind(&BlueHandApp::OnLogin, this));
     return true;
 }
 void BlueHandApp::Clear()
@@ -89,7 +69,16 @@ void BlueHandApp::OnCancelLogin()
 {
     std::cout << "cancel login" << std::endl;
 }
-void BlueHandApp::OnLogin(const std::string &strID, const std::string &strPwd, bool bRmbPwd, bool bAutoLogin)
+void BlueHandApp::OnLogin()
 {
-    std::cout << strID << strPwd << (bRmbPwd ? "TRUE" : "FALSE") << (bAutoLogin ? "TRUE" : "FALSE") << std::endl;
+    /*
+    m_strUserID = m_pLoginWnd->UserID();
+    m_strUserPwd = m_pLoginWnd->UserPwd();
+    m_bAutoLogin = m_pLoginWnd->AutoLogin();
+    m_bRmbPwd = m_pLoginWnd->RememberPwd();
+    */
+    Conf::WriteString("./conf/login.ini", "userinfo", "userid", m_strUserID);
+    Conf::WriteString("./conf/login.ini", "userinfo", "userpassword", m_strUserPwd);
+    Conf::WriteBool("./conf/login.ini", "userset", "autologin", m_bAutoLogin);
+    Conf::WriteBool("./conf/login.ini", "userset", "rememberpwd", m_bRmbPwd);
 }

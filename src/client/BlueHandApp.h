@@ -20,16 +20,13 @@ public:
     void Clear();
     bool Run();
     bool InitLoginWnd();
-    bool InitConf();
-    bool ReadLoginConf();
-    bool WriteLoginConf();
 public:
     void OnCancelLogin();
-    void OnLogin(const std::string &, const std::string &, bool, bool);
+    void OnLogin();
 private:
     //loginwnd
-    std::string m_strID;
-    std::string m_strPwd;
+    std::string m_strUserID;
+    std::string m_strUserPwd;
     bool m_bAutoLogin;
     bool m_bRmbPwd;
     LoginWnd *m_pLoginWnd;

@@ -4,24 +4,6 @@
 #include "Convert.h"
 #include <boost/filesystem.hpp>
 
-bool Conf::Init()
-{
-    boost::filesystem::path dirPath(CONF_DIR);
-    try
-    {
-	dirPath = boost::filesystem::absolute(dirPath);
-    }
-    catch (boost::filesystem::filesystem_error &e)
-    {
-	return false;
-    }
-    if (!boost::filesystem::exists(dirPath))
-    {
-	return boost::filesystem::create_directories(dirPath);
-    }
-    return true;
-}
-
 bool Conf::GetConfStr(const std::string &strFile, const std::string &strSection, const std::string &strKey, std::string &strConf)
 {
     if (strFile.empty()
@@ -182,6 +164,23 @@ bool Conf::WriteString(const std::string &strFile, const std::string &strSection
     {
 	return false;
     }
+    //创建文件全路径
+    boost::filesystem::path filePath(strFile);
+    boost::filesystem::path parentPath = filePath.parent_path();
+    if (!parentPath.empty())
+    {
+	try
+	{
+	    if (!boost::filesystem::create_directories(parentPath))
+	    {
+		return false;
+	    }
+	}
+	catch (boost::filesystem::filesystem_error &e)
+	{
+	    return false;
+	}
+    }
     std::fstream fs;
     fs.open(strFile, std::ios::in | std::ios::out);
     if (!fs.is_open())
@@ -216,7 +215,7 @@ bool Conf::WriteString(const std::string &strFile, const std::string &strSection
 		    std::string strLastBuf(std::istreambuf_iterator<char>(fs), std::istreambuf_iterator<char>());//读取文件最后的内容
 		    fs.seekg(sPos, std::ios::beg);
 		    fs << strKey << "=" << strVal << "\n";
-		    fs << strLastBuf;
+		    //fs << strLastBuf;
 		    return true;
 		}
 		sPos = fs.tellg();
@@ -226,7 +225,7 @@ bool Conf::WriteString(const std::string &strFile, const std::string &strSection
 	    std::string strLastBuf(std::istreambuf_iterator<char>(fs), std::istreambuf_iterator<char>());//读取文件最后的内容
 	    fs.seekg(sPos, std::ios::beg);
 	    fs << strKey << "=" << strVal << "\n";
-	    fs << strLastBuf;
+	    // fs << strLastBuf;
 	    return true;
 	}
     }

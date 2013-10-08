@@ -2,7 +2,6 @@
 #define _CONF_H_
 
 #include <string>
-#include "ConfDefine.h"
 
 #define CONF_MAX_LINE 1024//配置文件一行最多1024个
 
@@ -14,8 +13,6 @@ public:
     Conf(const Conf &) = delete;
     Conf& operator=(const Conf &) = delete;
 public:
-    static bool Init();
-    
     static bool GetBool(const std::string &, const std::string &, const std::string &, bool);
     static int GetInt(const std::string &, const std::string &, const std::string &, int);
     static unsigned GetUInt(const std::string &, const std::string &, const std::string &, unsigned);

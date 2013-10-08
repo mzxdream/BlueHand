@@ -3,6 +3,9 @@
 
 #include <string>
 
+//#define _SYS_WIN_
+#define _SYS_LINUX_
+
 class BhSys
 {
 public:
