@@ -3,8 +3,6 @@
 
 #include <string>
 
-#define CONF_MAX_LINE 1024//配置文件一行最多1024个
-
 class Conf
 {
 public:

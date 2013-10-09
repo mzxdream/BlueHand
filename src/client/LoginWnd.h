@@ -18,9 +18,9 @@ public:
 public:
     bool Init();
     void Clear();
-    const std::string& UserID() const;
+    std::string UserID() const;
     void UserID(const std::string &);
-    const std::string& UserPwd() const;
+    std::string UserPwd() const;
     void UserPwd(const std::string &);
     bool RememberPwd() const;
     void RememberPwd(bool);

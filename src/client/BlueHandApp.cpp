@@ -71,12 +71,11 @@ void BlueHandApp::OnCancelLogin()
 }
 void BlueHandApp::OnLogin()
 {
-    /*
     m_strUserID = m_pLoginWnd->UserID();
     m_strUserPwd = m_pLoginWnd->UserPwd();
     m_bAutoLogin = m_pLoginWnd->AutoLogin();
     m_bRmbPwd = m_pLoginWnd->RememberPwd();
-    */
+    
     Conf::WriteString("./conf/login.ini", "userinfo", "userid", m_strUserID);
     Conf::WriteString("./conf/login.ini", "userinfo", "userpassword", m_strUserPwd);
     Conf::WriteBool("./conf/login.ini", "userset", "autologin", m_bAutoLogin);

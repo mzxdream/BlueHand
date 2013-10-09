@@ -1,6 +1,6 @@
 #include "Conf.h"
 #include <fstream>
-#include <streambuf>
+#include <sstream>
 #include "Convert.h"
 #include <boost/filesystem.hpp>
 
@@ -14,23 +14,20 @@ bool Conf::GetConfStr(const std::string &strFile, const std::string &strSection,
     }
     std::ifstream ifs;
     ifs.open(strFile);
-    if (!ifs.is_open())
+    if (!ifs || !ifs.is_open())
     {
 	return false;
     }
-    char cBuf[CONF_MAX_LINE + 1] = {0};
     std::string strBuf;
-    while (ifs.getline(cBuf, CONF_MAX_LINE))
+    while (std::getline(ifs, strBuf))
     {
-	strBuf = cBuf;
 	if (strBuf.length() == (strSection.length() + 2)
 	    && '[' == strBuf.at(0)
 	    && ']' == strBuf.at(strSection.length() + 1)
 	    && !strBuf.compare(1, strSection.length(), strSection))
 	{
-	    while (ifs.getline(cBuf, CONF_MAX_LINE))
+	    while (std::getline(ifs, strBuf))
 	    {
-		strBuf = cBuf;
 		if (0 == strBuf.length()
 		    || '[' == strBuf.at(0))
 		{
@@ -167,7 +164,7 @@ bool Conf::WriteString(const std::string &strFile, const std::string &strSection
     //创建文件全路径
     boost::filesystem::path filePath(strFile);
     boost::filesystem::path parentPath = filePath.parent_path();
-    if (!parentPath.empty())
+    if (!parentPath.empty() && !boost::filesystem::exists(parentPath))
     {
 	try
 	{
@@ -183,24 +180,21 @@ bool Conf::WriteString(const std::string &strFile, const std::string &strSection
     }
     std::fstream fs;
     fs.open(strFile, std::ios::in | std::ios::out);
-    if (!fs.is_open())
+    if (!fs || !fs.is_open())
     {
 	return false;
     }
-    char cBuf[CONF_MAX_LINE + 1] = {0};
     std::string strBuf;
-    while (fs.getline(cBuf, CONF_MAX_LINE))
+    while (std::getline(fs, strBuf))
     {
-	strBuf = cBuf;
 	if (strBuf.length() == (strSection.length() + 2)
 	    && '[' == strBuf.at(0)
 	    && ']' == strBuf.at(strSection.length() + 1)
 	    && !strBuf.compare(1, strSection.length(), strSection))
 	{
 	    std::streampos sPos = fs.tellg();
-	    while (fs.getline(cBuf, CONF_MAX_LINE))
+	    while (std::getline(fs, strBuf))
 	    {
-		strBuf = cBuf;
 		if (0 == strBuf.length()
 		    || '[' == strBuf.at(0))
 		{
@@ -211,25 +205,33 @@ bool Conf::WriteString(const std::string &strFile, const std::string &strSection
 		    && !strBuf.compare(0, strKey.length(), strKey))
 		{
 		    //当包含section和key时
-		    fs.seekg(sPos, std::ios::beg);
-		    std::string strLastBuf(std::istreambuf_iterator<char>(fs), std::istreambuf_iterator<char>());//读取文件最后的内容
+		    std::stringstream ssLastBuf;//读取文件最后的内容
+		    ssLastBuf << fs.rdbuf();
+		    fs.clear();
 		    fs.seekg(sPos, std::ios::beg);
 		    fs << strKey << "=" << strVal << "\n";
-		    //fs << strLastBuf;
+		    fs << ssLastBuf.str();
+		    fs.close();
 		    return true;
 		}
 		sPos = fs.tellg();
 	    }
 	    //当包含section,不包含key时
+	    fs.clear();
 	    fs.seekg(sPos, std::ios::beg);
-	    std::string strLastBuf(std::istreambuf_iterator<char>(fs), std::istreambuf_iterator<char>());//读取文件最后的内容
+	    std::stringstream ssLastBuf;//读取文件最后的内容
+	    ssLastBuf << fs.rdbuf();
+	    fs.clear();
 	    fs.seekg(sPos, std::ios::beg);
 	    fs << strKey << "=" << strVal << "\n";
-	    // fs << strLastBuf;
+	    fs << ssLastBuf.str();
+	    fs.close();
 	    return true;
 	}
     }
     //当不包含section和key时
+    fs.clear();
+    fs.seekg(0, std::ios::end);
     fs << "[" << strSection << "]\n";
     fs << strKey << "=" << strVal << "\n";
     fs.close();

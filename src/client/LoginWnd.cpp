@@ -69,7 +69,7 @@ void LoginWnd::OnLoginBtnClicked()
 	m_cancelLoginSig();
     }
 }
-const std::string& LoginWnd::UserID() const
+std::string LoginWnd::UserID() const
 {
     return m_pIDEntry->get_text().raw();
 }
@@ -77,7 +77,7 @@ void LoginWnd::UserID(const std::string &strUserID)
 {
     m_pIDEntry->set_text(strUserID);
 }
-const std::string& LoginWnd::UserPwd() const
+std::string LoginWnd::UserPwd() const
 {
     return m_pPwdEntry->get_text().raw();
 }
