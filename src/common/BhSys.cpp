@@ -1,5 +1,4 @@
 #include "BhSys.h"
-#include "BhSysDefine.h"
 
 #ifdef _SYS_WIN_
 #include <windows.h>
@@ -12,7 +11,7 @@ bool BhSys::GetAppDirectory(std::string &strPath)
 {
     if (GetAppFullPath(strPath))
     {
-	size_t pos = strPath.find_last_of("/\\");
+	std::string::size_type pos = strPath.find_last_of("/\\");
 	if (pos != std::string::npos)
 	{
 	    strPath = strPath.substr(0, pos+1);
@@ -25,7 +24,7 @@ bool BhSys::GetAppName(std::string &strPath)
 {
     if (GetAppFullPath(strPath))
     {
-	size_t pos = strPath.find_last_of("/\\");
+	std::string::size_type pos = strPath.find_last_of("/\\");
 	if (pos != std::string::npos)
 	{
 	    strPath = strPath.substr(pos+1);

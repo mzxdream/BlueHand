@@ -30,6 +30,8 @@ private:
     bool m_bAutoLogin;
     bool m_bRmbPwd;
     LoginWnd *m_pLoginWnd;
+    //loginSet
+    
 };
 
 #endif

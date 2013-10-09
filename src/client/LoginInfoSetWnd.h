@@ -12,14 +12,10 @@ public:
 public:
     bool Init();
     void Clear();
-    const std::string& GetLocalIP() const;
-    void SetLocalIP(const std::string &);
-    unsigned GetLocalPort() const;
-    void SetLocalPort(unsigned);
-    const std::string& GetServerIP() const;
-    void SetServerIP(const std::string &);
-    unsigned GetServerPort() const;
-    void SetServerPort(unsigned);
+    std::string& ServerIP() const;
+    void ServerIP(const std::string &);
+    unsigned short ServerPort() const;
+    void SetServerPort(unsigned short);
 };
 
 #endif
