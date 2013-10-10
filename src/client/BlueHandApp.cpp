@@ -39,10 +39,12 @@ bool BlueHandApp::InitLoginWnd()
     {
 	return false;
     }
+    m_strServerAddr = Conf::GetString("./conf/login.ini", "userset", "serveraddr", "");
     m_strUserID = Conf::GetString("./conf/login.ini", "userinfo", "userid", "");
     m_strUserPwd = Conf::GetString("./conf/login.ini", "userinfo", "userpassword", "");
     m_bAutoLogin = Conf::GetBool("./conf/login.ini", "userset", "autologin", false);
     m_bRmbPwd = Conf::GetBool("./conf/login.ini", "userset", "rememberpwd", false);
+    m_pLoginWnd->ServerAddr(m_strServerAddr);
     m_pLoginWnd->UserID(m_strUserID);
     m_pLoginWnd->UserPwd(m_strUserPwd);
     m_pLoginWnd->AutoLogin(m_bAutoLogin);
@@ -71,11 +73,13 @@ void BlueHandApp::OnCancelLogin()
 }
 void BlueHandApp::OnLogin()
 {
+    m_strServerAddr = m_pLoginWnd->ServerAddr();
     m_strUserID = m_pLoginWnd->UserID();
     m_strUserPwd = m_pLoginWnd->UserPwd();
     m_bAutoLogin = m_pLoginWnd->AutoLogin();
     m_bRmbPwd = m_pLoginWnd->RememberPwd();
-    
+
+    Conf::WriteString("./conf/login.ini", "userset", "serveraddr", m_strServerAddr);
     Conf::WriteString("./conf/login.ini", "userinfo", "userid", m_strUserID);
     Conf::WriteString("./conf/login.ini", "userinfo", "userpassword", m_strUserPwd);
     Conf::WriteBool("./conf/login.ini", "userset", "autologin", m_bAutoLogin);

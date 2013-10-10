@@ -5,6 +5,8 @@ LoginWnd::LoginWnd(BaseObjectType *pObj, const Glib::RefPtr<Gtk::Builder> &refGl
     , m_refBuilder(refGlade)
     , m_pLoginBtn(nullptr)
     , m_pSetBtn(nullptr)
+    , m_pServerAddrLabel(nullptr)
+    , m_pServerAddrEntry(nullptr)
     , m_pIDLabel(nullptr)
     , m_pPwdLabel(nullptr)
     , m_pIDEntry(nullptr)
@@ -21,6 +23,8 @@ bool LoginWnd::Init()
 {
     m_refBuilder->get_widget("LoginBtn", m_pLoginBtn);
     m_refBuilder->get_widget("SetBtn", m_pSetBtn);
+    m_refBuilder->get_widget("ServerAddrLabel", m_pServerAddrLabel);
+    m_refBuilder->get_widget("ServerAddrEntry", m_pServerAddrEntry);
     m_refBuilder->get_widget("IDLabel", m_pIDLabel);
     m_refBuilder->get_widget("PwdLabel", m_pPwdLabel);
     m_refBuilder->get_widget("IDEntry", m_pIDEntry);
@@ -30,6 +34,8 @@ bool LoginWnd::Init()
    
     if (!m_pLoginBtn
 	|| !m_pSetBtn
+	|| !m_pServerAddrLabel
+	|| !m_pServerAddrEntry
 	|| !m_pIDLabel
 	|| !m_pPwdLabel
 	|| !m_pIDEntry
@@ -68,6 +74,14 @@ void LoginWnd::OnLoginBtnClicked()
 	m_bLogin = true;
 	m_cancelLoginSig();
     }
+}
+std::string LoginWnd::ServerAddr() const
+{
+    return m_pServerAddrEntry->get_text().raw();
+}
+void LoginWnd::ServerAddr(const std::string &strServerAddr)
+{
+    m_pServerAddrEntry->set_text(strServerAddr);
 }
 std::string LoginWnd::UserID() const
 {

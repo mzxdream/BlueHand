@@ -25,6 +25,7 @@ public:
     void OnLogin();
 private:
     //loginwnd
+    std::string m_strServerAddr;
     std::string m_strUserID;
     std::string m_strUserPwd;
     bool m_bAutoLogin;

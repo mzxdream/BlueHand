@@ -26,6 +26,8 @@ public:
     void RememberPwd(bool);
     bool AutoLogin() const;
     void AutoLogin(bool);
+    std::string ServerAddr() const;
+    void ServerAddr(const std::string &);
     boost::signals2::signal<void ()>& CloseSignal();
     boost::signals2::signal<void ()>& CancelLoginSignal();
     boost::signals2::signal<void ()>& LoginSignal();
@@ -41,6 +43,8 @@ protected:
     Glib::RefPtr<Gtk::Builder> m_refBuilder;
     Gtk::Button *m_pLoginBtn;
     Gtk::Button *m_pSetBtn;
+    Gtk::Label *m_pServerAddrLabel;
+    Gtk::Entry *m_pServerAddrEntry;
     Gtk::Label *m_pIDLabel;
     Gtk::Label *m_pPwdLabel;
     Gtk::Entry *m_pIDEntry;
