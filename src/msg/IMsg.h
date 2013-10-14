@@ -16,15 +16,15 @@ public:
     IMsg& operator=(const IMsg &) = default;
 public:
     virtual std::string GetClassName() const;
-    virtual IMsg * Clone() const = 0;
-private:
-    std::string strNetID;
+    virtual IMsg* Clone() const = 0;
 private:
     friend class boost::serialization::access;
-    template <typename Archive>
-    void serialize(Archive &ar, const unsigned version)
-	{
-	}
+    template<typename Archive>
+    void serialize(Archive &ar, const unsigned version);
 };
 
+template<typename Archive>
+void IMsg::serialize(Archive &ar, const unsigned version)
+{
+}
 #endif
