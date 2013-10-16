@@ -20,6 +20,7 @@ public:
     bool Bind(const std::string &, int);
     bool Listen(int);
     bool Accept(BhSock &);
+    
 private:
     int m_sock;
 };
