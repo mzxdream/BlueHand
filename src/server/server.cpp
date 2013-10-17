@@ -10,6 +10,7 @@
 
 #define SERVER_PORT 3230
 #define LISTEN_LEN 100
+#define EPOLL_LEN 100
 
 bool SetNonBlock(int nSock)
 {
@@ -51,13 +52,66 @@ int main(int argc, char *argv[])
     {
 	return 0;
     }
+    struct epoll_event event;
+    struct epoll_event events[EPOLL_LEN];
     int efd = 0;
     if ((efd = epoll_create1(0)) == -1)
     {
 	return 0;
     }
-    struct epoll_event event;
-    struct epoll_event *events;
+    event.data.fd = nSock;
+    event.events = EPOLLIN | EPOLLET;
+    if (-1 == epoll_ctl(efd, EPOLL_CTL_ADD, nSock, &event))
+    {
+	return 0;
+    }
+    while (true)
+    {
+	int n = 0;
+	n = epoll_wait(efd, events, EPOLL_LEN, -1);
+	for (int i = 0; i < n; ++i)
+	{
+	    if ((events[i].events & EPOLLERR)
+		|| (events[i].events & EPOLLHUP)
+		|| !(events[i].events & EPOLLIN))
+	    {
+		close(events[i].data.fd);
+	    }
+	    else if (nSock == events[i].data.fd)
+	    {
+		while (true)
+		{
+		    struct sockaddr inAddr;
+		    socklen_t inLen = sizeof (struct sockaddr);
+		    int nInfd;
+		    if (-1 == (nInfd = accept(nSock, &inAddr, &inLen)))
+		    {
+			break;
+		    }
+		    if (!SetNonBlock(nInfd))
+		    {
+			return 0;
+		    }
+		    event.data.fd = nInfd;
+		    event.events = EPOLLIN | EPOLLET;
+		    if (-1 == (epoll_ctl(efd, EPOLL_CTL_ADD, nInfd, &event)))
+		    {
+			return 0;
+		    }
+		}
+	    }
+	    else
+	    {
+		int done = 0;
+		while (true)
+		{
+		    ssize_t count;
+		    char buf[512];
+		    count = 
+		}
+	    }
+	}
+    }
     return 0;
     
 }
