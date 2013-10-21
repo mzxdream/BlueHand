@@ -14,7 +14,10 @@
 #define SERV_PORT 3230
 #define LISTEN_MAX 100
 #define EPOLL_MAX 100
-
+typedef tagNetMsgHeader
+{
+    char cLen[2];
+}NetMsgHeader;
 bool SetSockNonBlock(int nSock)
 {
     int nFlags = 0;
@@ -27,9 +30,86 @@ bool SetSockNonBlock(int nSock)
     }
     return false;
 }
-void HandMsg(int nSock, int nEpoll)
+int RecvAll(int nSock, void *buf, int nLen)
 {
-    std::cout << nSock << nEpoll << std::endl;
+    int nRecvLen = 0;
+    ssize_t sockRet = 0;
+    while (true)
+    {
+	sockRet = recv(nSock, buf+nRecvLen, nLen - nRecvLen);
+	if (sockRet < 0)
+	{
+	    if (0 == nRecvLen && errno == EAGAIN)
+	    {
+		return 0;
+	    }
+	    else if (errno == EAGAIN
+		|| errno == EWOULDBLOCK
+		|| errno == EINTR)
+	    {
+		continue;
+	    }
+	    else
+	    {
+		return -1;
+	    }
+	}
+	else if (0 == sockRet)
+	{
+	    return -1;
+	}
+	else
+	{
+	    nRecvlen += sockRet;
+	    if (nRecvLen == nLen)
+	    {
+		return 1;
+	    }
+	}
+    }
+    return -1;
+}
+void HandleMsg(int nSock, int nEpoll)
+{
+    NetMsgHeader header;
+    int nRet = 0;
+    while (true)
+    {
+	//读取消息头
+	nRet = RecvAll(nSock, &header, sizeof(header));
+	if (-1 == nRet)
+	{
+	    close(nSock);
+	    return;
+	}
+	else if (0 == nRet)
+	{
+	    struct epoll_event event;
+	    event.data.fd = nInSock;
+	    event.events = EPOLLIN | EPOLLET;
+	    if (-1 == (epoll_ctl(efd, EPOLL_CTL_ADD, nInSock, &event)))
+	    {
+		return;
+	    }
+	    else
+	    {
+		return;
+	    }
+	}
+	else if (1 == nRet)
+	{
+	    int nLen = header.cLen[0] << 8 + header.cLen[1];
+	    char *buf = new char[nLen + 1];
+	    nRet = RecvAll(nSock, buf, nLen);
+	    if (nRet != 1)
+	    {
+		close(nSock);
+		return;
+	    }
+	    buf[nLen + 1] = '\0';
+	    //调用msghandle
+	}
+    }
 }
 int main(int argc, char *argv[])
 {
@@ -112,7 +192,7 @@ int main(int argc, char *argv[])
 	    }
 	    else
 	    {
-		pool.PushTask(boost::bind(HandMsg, events[i].data.fd, efd));
+		pool.PushTask(boost::bind(HandleMsg, events[i].data.fd, efd));
 	    }
 	}
     }
