@@ -6,6 +6,7 @@
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/condition.hpp>
 
 class BhThreadPool
 {
@@ -26,6 +27,8 @@ private:
     std::list<boost::function<void ()>> m_taskList;
     boost::thread_group m_threadGroup;
     boost::mutex m_taskMutex;
+    boost::condition m_emptyCond;
+    bool m_bWantStop;
 };
 
 #endif
