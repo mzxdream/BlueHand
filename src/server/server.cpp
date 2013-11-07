@@ -20,54 +20,12 @@ typedef tagNetMsgHeader
 }NetMsgHeader;
 bool SetSockNonBlock(int nSock)
 {
-    int nFlags = 0;
-    if ((nFlags = fcntl(nSock, F_GETFL, 0)) != -1)
-    {
-	if (fcntl(nSock, F_SETFL, nFlags | O_NONBLOCK) != -1)
-	{
-	    return true;
-	}
-    }
-    return false;
+    
 }
+typedef struct tag
 int RecvAll(int nSock, void *buf, int nLen)
 {
-    int nRecvLen = 0;
-    ssize_t sockRet = 0;
-    while (true)
-    {
-	sockRet = recv(nSock, buf+nRecvLen, nLen - nRecvLen);
-	if (sockRet < 0)
-	{
-	    if (0 == nRecvLen && errno == EAGAIN)
-	    {
-		return 0;
-	    }
-	    else if (errno == EAGAIN
-		|| errno == EWOULDBLOCK
-		|| errno == EINTR)
-	    {
-		continue;
-	    }
-	    else
-	    {
-		return -1;
-	    }
-	}
-	else if (0 == sockRet)
-	{
-	    return -1;
-	}
-	else
-	{
-	    nRecvlen += sockRet;
-	    if (nRecvLen == nLen)
-	    {
-		return 1;
-	    }
-	}
-    }
-    return -1;
+    ;
 }
 void HandleMsg(int nSock, int nEpoll)
 {
@@ -118,11 +76,7 @@ int main(int argc, char *argv[])
     {
 	return 0;
     }
-    struct sockaddr_in servAddr;
-    servAddr.sin_family = AF_INET;
-    servAddr.sin_port = htons(SERV_PORT);
-    servAddr.sin_addr.s_addr = INADDR_ANY;
-    if (bind(nLisSock, (struct sockaddr *)&servAddr, sizeof(servAddr)) < 0)
+    
     {
 	return 0;
     }
