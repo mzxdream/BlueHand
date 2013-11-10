@@ -1,12 +1,59 @@
 #include "BhSocket.h"
 
-bool BhSocket::Bind(int nSock, int nPort)
+BhSocket::BhSocket(int nSock)
+    : m_nSock(nSock)
+{
+}
+BhSocket::~BhSocket()
+{
+    Destory();
+}
+void BhSocket::Attach(int nSock)
+{
+    Destory();
+    m_nSock = nSock;
+}
+int BhSocket::Detach()
+{
+    int nSock = m_nSock;
+    m_nSock = -1;
+    return nSock;
+}
+bool BhSocket::Create(SockType type)
+{
+    Destory();
+    if (type == SockType::TCP)
+    {
+	m_nSock = socket(PF_INET, SOCK_STREAM, 0);
+    }
+    else if (type == SockType::UDP)
+    {
+	m_nSock = socket(PF_INET, SOCK_DGRAME, 0);
+    }
+    return m_nSock >= 0;
+}
+bool BhSocket::Bind(int nPort, const std::string &strIP)
 {
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(nPort);
-    addr.sin_addr.s_addr = INADDR_ANY;
-    return bind(nSock, (struct sockaddr *)&addr, sizeof(addr)) >= 0; 
+    if (strIP.empty())
+    {
+	addr.sin_addr.s_addr = INADDR_ANY;
+    }
+    else
+    {
+	addr.sin_addr.s_addr = inet_addr(strIP.c_str());
+    }
+    return bind(m_nSock, (struct sockaddr *)&addr, sizeof(addr)) >= 0; 
+}
+bool BhSocket::Listen(int nCount)
+{
+    return listen(m_nSock, nCount) >= 0;
+}
+bool BhSocket::SetNonBlock()
+{
+    return BhSocket::SetNonBlock(m_nSock);
 }
 bool BhScoket::SetNonBlock(int nSock)
 {
@@ -20,45 +67,11 @@ bool BhScoket::SetNonBlock(int nSock)
     }
     return false;
 }
-int BhSocket::RecvAllLen(int nSock, void *pBuf, int nLen)
+void BhSocket::Destory()
 {
-    int nRecvLen = 0;
-    ssize_t sockRet = 0;
-    while (true)
+    if (m_nSock >= 0)
     {
-	sockRet = recv(nSock, pBuf + nRecvLen, nLen - nRecvLen);
-	if (sockRet < 0)
-	{
-	   if (errno == EAGAIN
-		|| errno == EWOULDBLOCK
-		|| errno == EINTR)
-	    {
-		if (0 == nRecvLen)
-		{
-		    return 0;
-		}
-		else
-		{
-		    continue;
-		}
-	    }
-	    else
-	    {
-		return -1;
-	    }
-	}
-	else if (0 == sockRet)
-	{
-	    return -1;
-	}
-	else
-	{
-	    nRecvlen += sockRet;
-	    if (nRecvLen == nLen)
-	    {
-		return 1;
-	    }
-	}
+	close(m_nSock);
     }
-    return -1;
+    m_nSock = -1;
 }
