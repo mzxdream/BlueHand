@@ -4,11 +4,13 @@
 class BhMemeryPool
 {
 public:
+    BhMemeryPool();
     explicit BhMemeryPool(unsigned uBlockLen);
     ~BhMemeryPool();
-    BhMemeryPool(const BhMemeryPool &) = delete;
-    BhMemeryPool& operator=(const BhMemeryPool &) = delete;
+    BhMemeryPool(const BhMemeryPool &obj);
+    BhMemeryPool& operator=(const BhMemeryPool &obj);
 public:
+    bool Init(unsigned uBlockLen);
     void Clear();
     unsigned Length() const;
     bool Read(void *pBuf, unsigned uLen);

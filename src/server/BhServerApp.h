@@ -2,28 +2,28 @@
 #define _BHSERVERAPP_H_
 
 #include <boost/ptr_container/ptr_unordered_map.hpp>
-#include "BhMemeryPool.h"
+#include "../kernal/BhMemeryPool.h"
+#include "../kernal/BhSockInfo.h"
+#include <string>
 
 class BhServerApp
 {
 private:
-    BhServerApp() = default;
+    BhServerApp();
 public:
-    ~BhServerApp() = default;
+    ~BhServerApp();
     BhServerApp(const BhServerApp &) = delete;
     BhServerApp& operator=(const BhServerApp &) = delete;
 public:
     static BhServerApp& Instance();
-    bool Init();
+    bool Init(const std::string &strIP, int nPort, int nListenCount, int nHandleCount, int nBLockLength, int nEpollTimeOut, int nMsgHeaderLen);
     void Clear();
     void Run();
-    static int CreateSock();
-    static int BindSock();
-    static bool SetSockNonBlock(int nSock);
-    static int RecvAll(int nSock, void *pBuf, int nLen);
+    void Stop();
     void HandleMsg(int nEpoll, int nSock);
 private:
     boost::ptr_unordered_map<int, BhMemeryPool> m_sockBufPunmap;//sock读取的内容
+    boost::ptr_unorderd_map<int, BhSockInfo> m_sockInfoPunmap;//sock信息
     std::string m_strIP;//绑定IP
     int m_nPort;//绑定端口
     int m_nListenCount;//同时最多监听sock数

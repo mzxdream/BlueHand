@@ -12,6 +12,34 @@ BhMemeryPool::~BhMemeryPool()
 {
     Clear();
 }
+BhMemeryPool::BhMemeryPool(const BhMemeryPool &obj)
+{
+    m_uBlockLen = obj.m_uBlockLen;
+    m_uBeginPos = obj.m_uBeginPos;
+    m_uEndPos = obj.m_uEndPos;
+    m_uLength = obj.m_uLength;
+    std::list<void *>::iterator iter = obj.m_blockList.begin();
+    while (iter != obj.m_blockList.end())
+    {
+	char *pBuf = new char[m_uBlockLen];
+	std::copy(*iter, *iter + m_uBlockLen, pBuf);
+	m_blockList.push_back(pBuf);
+    }
+}
+BhMemeryPool& BhMemeryPool::operator=(const BhMemeryPool & obj)
+{
+    m_uBlockLen = obj.m_uBlockLen;
+    m_uBeginPos = obj.m_uBeginPos;
+    m_uEndPos = obj.m_uEndPos;
+    m_uLength = obj.m_uLength;
+    std::list<void *>::iterator iter = obj.m_blockList.begin();
+    while (iter != obj.m_blockList.end())
+    {
+	char *pBuf = new char[m_uBlockLen];
+	std::copy(*iter, *iter + m_uBlockLen, pBuf);
+	m_blockList.push_back(pBuf);
+    }
+}
 void BhMemeryPool::Clear()
 {
     m_uBlockLen = 0;

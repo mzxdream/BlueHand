@@ -1,0 +1,32 @@
+#include "BhSockInfo.h"
+
+BhSockInfo::BhSockInfo(int nSock, const std::string &strIP, int nPort)
+    : m_nSock(nSock)
+    , m_strIP(strIP)
+    , m_nPort(nPort)
+{
+}
+int BhSockInfo::Sock() const
+{
+    return m_nSock;
+}
+void BhSockInfo::Sock(int nSock)
+{
+    m_nSock = nSock;
+}
+const std::string& BhSockInfo::IP() const
+{
+    return m_strIP;
+}
+void BhSockInfo::IP(const std::string &strIP)
+{
+    m_strIP = strIP;
+}
+int BhSockInfo::Port() const
+{
+    return m_nPort;
+}
+void BhSockInfo::Port(int nPort)
+{
+    m_nPort = nPort;
+}

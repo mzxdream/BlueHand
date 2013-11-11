@@ -1,20 +1,39 @@
 #include "BhServerApp.h"
-#include "BhSocket.h"
+#include "../kernal/BhSocket.h"
+#include "../kernal/BhThreadPool.h"
+#include <sys/epoll.h>
+#include <errno.h>
 
+BhServerApp::BhServerApp()
+{
+}
+BhServerApp::~BhServerApp()
+{
+}
 BhServerApp& BhServerApp::Instance()
 {
     static BhServerApp instance;
     return instance;
 }
-bool BhServerApp::Init(int nPort, int nListenCount, int nHandleCount)
+bool BhServerApp::Init(const std::string &strIP, int nPort, int nListenCount, int nHandleCount
+		       , int nBLockLength, int nEpollTimeOut, int nMsgHeaderLen)
 {
+    m_bWantRun = true;
+    m_strIP = strIP;
     m_nPort = nPort;
     m_nListenCount = nListenCount;
     m_nHandleCount = nHandleCount;
+    m_nBlockLength = nBlockLength;
+    m_nEpollTimeOut = nEpollTimeOut;
+    m_nMsgHeaderLen = nMsgHeaderLen;
     return true;
 }
 void BhServerApp::Clear()
 {
+}
+void BhServerApp::Stop()
+{
+    m_bWantRun = false;
 }
 void BhServerApp::HandleMsg(int nEpoll, int nSock)
 {
@@ -95,7 +114,10 @@ void BhServerApp::HandleMsg(int nEpoll, int nSock)
 			}
 		    }
 		}
-		break;
+		else
+		{
+		    break;
+		}
 	    }
 	}
     }
@@ -197,5 +219,13 @@ void BhServerApp::Run()
 		}
 	    }
 	}
+    }
+    close(efd);
+    pool.Interrupt();
+    pool.Join();
+    boost::ptr_unordered_map<int, BhMemeryPool>::iterator iter = m_sockBufPunmap.begin();
+    while (iter != m_sockBufPunmap.end())
+    {
+	
     }
 }

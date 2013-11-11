@@ -1,0 +1,15 @@
+#ifndef _BHSOCKBUF_H_
+#define _BHSOCKBUF_H_
+
+#include "BhMemeryPool.h"
+
+class BhSockBuf
+{
+public:
+    BhSockBuf();
+    ~BhSockBuf();
+private:
+    BhMemeryPool m_pool;
+};
+
+#endif
