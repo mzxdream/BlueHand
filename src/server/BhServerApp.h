@@ -5,9 +5,15 @@
 #include "../kernal/BhMemeryPool.h"
 #include "../kernal/BhSockInfo.h"
 #include <string>
+#include <boost/thread.hpp>
+#include <boost/thread/shared_mutex.hpp>
 
 class BhServerApp
 {
+public:
+    typedef boost::shared_mutex RWMutex;
+    typedef boost::shared_lock<RWMutex> ReadLock;
+    typedef boost::unique_lock<RWMutex> WriteLock;
 private:
     BhServerApp();
 public:
@@ -23,7 +29,9 @@ public:
     void HandleMsg(int nEpoll, int nSock);
 private:
     boost::ptr_unordered_map<int, BhMemeryPool> m_sockBufPunmap;//sock读取的内容
+    RWMutex m_sockBufMutex;
     boost::ptr_unorderd_map<int, BhSockInfo> m_sockInfoPunmap;//sock信息
+    RWMutex m_sockInfoMutex;
     std::string m_strIP;//绑定IP
     int m_nPort;//绑定端口
     int m_nListenCount;//同时最多监听sock数

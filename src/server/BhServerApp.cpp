@@ -44,7 +44,7 @@ void BhServerApp::HandleMsg(int nEpoll, int nSock)
     int nMsgLen = 0;
     int i = 0;
     boost::ptr_unordered_map<int, BhMemeryPool>::iterator iter;
-    
+   
     while (m_bWantRun)
     {
 	nReadLen = recv(nSock, pBuf, m_nBlockLength, 0);
@@ -57,26 +57,48 @@ void BhServerApp::HandleMsg(int nEpoll, int nSock)
 		event.data.fd = nSock;
 		if (-1 == (epoll_ctl(efd, EPOLL_CTL_ADD, nSock, &event)))
 		{
-		    m_sockBufPunmap.erase(nSock);
+		    {
+			WriteLock lock(m_sockInfoMutex);
+			m_sockInfoPunmap.erase(nSock);
+		    }
+		    {
+			WriteLock lock(m_sockBufMutex);
+			m_sockBufMutex.erase(nSock);
+		    }
 		    close(nSock);
 		}
 		break;
 	    }
 	    else
 	    {
-		m_sockBufPunmap.erase(nSock);
+		{
+		    WriteLock lock(m_sockBufMutex);
+		    m_sockBufPunmap.erase(nSock);
+		}
+		{
+		    WriteLock lock(m_sockInfoMutex);
+		    m_sockInfoPunmap.erase(nSock);
+		}
 		close(nSock);
 		break;
 	    }
 	}
 	else if (0 == nReadLen)
 	{
-	    m_sockBufPunmap.erase(nSock);
+	    {
+		WriteLock lock(m_sockBufMutex);
+		m_sockBufPunmap.erase(nSock);
+	    }
+	    {
+		WriteLock lock(m_sockInfoMutex);
+		m_sockInfoPunmap.erase(nSock);
+	    }
 	    close(nSock);
 	    break;
 	}
 	else
 	{
+	    ReadLock lock(m_sockBufMutex);
 	    iter = m_sockBufPunmap.find(nSock);
 	    if (iter == m_sockBufPunmap.end())
 	    {
@@ -193,7 +215,16 @@ void BhServerApp::Run()
 			if (BhSocket::SetNonBlock(nSock)
 			    && epoll_ctl(efd, EPOLL_CTL_ADD, nSock, &event) != -1)
 			{
-			    m_sockBufPunmap[nSock] = new BhMemeryPool(m_nBlockLength);
+			    {
+				WriteLock lock(m_sockBufMutex);
+				m_sockBufPunmap.insert(nSock, new BhMemeryPool(m_nBlockLength));
+			    }
+			    {
+				std::string strIP = inet_ntoa(addr.sin_addr);
+				int nPort = ntohs(addr.sin_port);
+				WriteLock lock(m_sockInfoMutex);
+				m_sockInfoPunmap.insert(nSock, new BhSockInfo(nSock, strIP, nPort));
+			    }
 			}
 			else
 			{
@@ -209,7 +240,14 @@ void BhServerApp::Run()
 		    || (events[i].events & EPOLLHUP)
 		    || (events[i].events & EPOLLIN))
 		{
-		    m_sockBufUnmap.erase(events[i].data.fd);
+		    {
+			WriteLock lock(m_sockBufMutex);
+			m_sockBufUnmap.erase(events[i].data.fd);
+		    }
+		    {
+			WriteLock lock(m_sockInfoMutex);
+			m_sockInfoMutex.erase(events[i].data.fd);
+		    }
 		    close(events[i].data.fd);
 		}
 		else
