@@ -7,6 +7,7 @@
 #include <string>
 #include <boost/thread.hpp>
 #include <boost/thread/shared_mutex.hpp>
+#include <boost/bind.hpp>
 
 class BhServerApp
 {
@@ -24,9 +25,12 @@ public:
     static BhServerApp& Instance();
     bool Init(const std::string &strIP, int nPort, int nListenCount, int nHandleCount, int nBLockLength, int nEpollTimeOut, int nMsgHeaderLen);
     void Clear();
-    void Run();
+    bool Start();
     void Stop();
+    void Wait();
     void HandleMsg(int nEpoll, int nSock);
+private:
+    void Run();
 private:
     boost::ptr_unordered_map<int, BhMemeryPool> m_sockBufPunmap;//sock读取的内容
     RWMutex m_sockBufMutex;
@@ -40,6 +44,7 @@ private:
     bool m_bWantRun;//循环运行
     int m_nEpollTimeOut;//epoll wait超时
     int m_nMsgHeaderLen;//消息长度所占字节数
+    boost::thread *m_pThread;
 };
 
 #endif

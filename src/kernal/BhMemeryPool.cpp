@@ -18,12 +18,13 @@ BhMemeryPool::BhMemeryPool(const BhMemeryPool &obj)
     m_uBeginPos = obj.m_uBeginPos;
     m_uEndPos = obj.m_uEndPos;
     m_uLength = obj.m_uLength;
-    std::list<void *>::iterator iter = obj.m_blockList.begin();
+    std::list<char *>::const_iterator iter = obj.m_blockList.begin();
     while (iter != obj.m_blockList.end())
     {
 	char *pBuf = new char[m_uBlockLen];
 	std::copy(*iter, *iter + m_uBlockLen, pBuf);
 	m_blockList.push_back(pBuf);
+	++iter;
     }
 }
 BhMemeryPool& BhMemeryPool::operator=(const BhMemeryPool & obj)
@@ -32,18 +33,15 @@ BhMemeryPool& BhMemeryPool::operator=(const BhMemeryPool & obj)
     m_uBeginPos = obj.m_uBeginPos;
     m_uEndPos = obj.m_uEndPos;
     m_uLength = obj.m_uLength;
-    std::list<void *>::iterator iter = obj.m_blockList.begin();
+    std::list<char *>::const_iterator iter = obj.m_blockList.begin();
     while (iter != obj.m_blockList.end())
     {
 	char *pBuf = new char[m_uBlockLen];
 	std::copy(*iter, *iter + m_uBlockLen, pBuf);
 	m_blockList.push_back(pBuf);
+	++ iter;
     }
-}
-bool BhMemeryPool::Init(unsigned uBlockLen)
-{
-    m_uBlockLen = uBlockLen;
-    return true;
+    return *this;
 }
 void BhMemeryPool::Clear()
 {
@@ -51,24 +49,24 @@ void BhMemeryPool::Clear()
     m_uBeginPos = 0;
     m_uEndPos = 0;
     m_uLength = 0;
-    std::list<void *>::iterator iter = m_blockList.begin();
+    std::list<char *>::iterator iter = m_blockList.begin();
     while (iter != m_blockList.end())
     {
 	delete *iter;
 	iter = m_blockList.erase(iter);
     }
 }
-unsigned BhMemery::Length() const
+unsigned BhMemeryPool::Length() const
 {
     return m_uLength;
 }
-bool BhMemery::Read(void *pBuf, unsigned uLen)
+bool BhMemeryPool::Read(char *pBuf, unsigned uLen)
 {
     if (m_uLength < uLen)
     {
 	return false;
     }
-    std::list<void *>::iterator iter = m_blockList.begin();
+    std::list<char *>::iterator iter = m_blockList.begin();
     if (m_uBlockLen - m_uBeginPos >= uLen)
     {
 	std::copy(*iter, *iter + uLen, pBuf);
@@ -95,12 +93,13 @@ bool BhMemery::Read(void *pBuf, unsigned uLen)
     }
     return true;
 }
-void BhMemeryPool::Write(const void *pBuf, unsigned uLen)
+void BhMemeryPool::Write(const char *pBuf, unsigned uLen)
 {
     m_uLength += uLen;
-    std::list<void *>::iterator iter = m_blockList.rbegin();
     if (0 != m_uEndPos)
     {
+	std::list<char *>::iterator iter = m_blockList.end();
+	--iter;
 	if (uLen < m_uBlockLen - m_uEndPos)
 	{
 	    std::copy(pBuf, pBuf + uLen, *iter + m_uEndPos);
@@ -113,7 +112,7 @@ void BhMemeryPool::Write(const void *pBuf, unsigned uLen)
 	    m_uEndPos = 0;
 	    while (true)
 	    {
-		void *p = new char[m_uBlockLen];
+		char *p = new char[m_uBlockLen];
 		m_blockList.push_back(p);
 		if (uLen - uWriteLen > m_uBlockLen)
 		{
@@ -135,16 +134,16 @@ void BhMemeryPool::Write(const void *pBuf, unsigned uLen)
 	unsigned uWriteLen = 0;
 	while (true)
 	{
-	    void *p = new char[m_uBlockLen];
+	    char *p = new char[m_uBlockLen];
 	    m_blockList.push_back(p);
 	    if (uLen - uWriteLen > m_uBlockLen)
 	    {
-		std::copy(pBuf + uWriteLen, pBuf + uWriteLen + m_uBlockLen, *iter);
+		std::copy(pBuf + uWriteLen, pBuf + uWriteLen + m_uBlockLen, p);
 		uWriteLen += m_uBlockLen;
 	    }
 	    else
 	    {
-		std::copy(pBuf + uWriteLen, pBuf + uLen, *iter);
+		std::copy(pBuf + uWriteLen, pBuf + uLen, p);
 		m_uEndPos = (uLen - uWriteLen);
 		m_uEndPos %= m_uBlockLen;
 		break;
@@ -161,8 +160,8 @@ void BhMemeryPool::Free(unsigned uLen)
     else
     {
 	m_uLength -= uLen;
-	std::list<void *>::iterator iter = m_blockList.begin();
-	if (uLen > m_uBLockLen - m_uBeginPos)
+	std::list<char *>::iterator iter = m_blockList.begin();
+	if (uLen > m_uBlockLen - m_uBeginPos)
 	{
 	    uLen -= (m_uBlockLen - m_uBeginPos);
 	    delete *iter;

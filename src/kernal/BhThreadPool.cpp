@@ -1,7 +1,7 @@
 #include "BhThreadPool.h"
 
 BhThreadPool::BhThreadPool(int nCount)
-    :m_bWantStop(false);
+    :m_bWantStop(false)
 {
     for (int i = 0; i < nCount; ++i)
     {

@@ -28,7 +28,7 @@ bool BhSocket::Create(SockType type)
     }
     else if (type == SockType::UDP)
     {
-	m_nSock = socket(PF_INET, SOCK_DGRAME, 0);
+	m_nSock = socket(PF_INET, SOCK_DGRAM, 0);
     }
     return m_nSock >= 0;
 }
@@ -55,7 +55,7 @@ bool BhSocket::SetNonBlock()
 {
     return BhSocket::SetNonBlock(m_nSock);
 }
-bool BhScoket::SetNonBlock(int nSock)
+bool BhSocket::SetNonBlock(int nSock)
 {
     int nFlags = 0;
     if ((nFlags = fcntl(nSock, F_GETFL, 0)) != -1)

@@ -5,10 +5,13 @@
 #include <errno.h>
 
 BhServerApp::BhServerApp()
+    : m_pThread(nullptr)
+    , m_bWantRun(true)
 {
 }
 BhServerApp::~BhServerApp()
 {
+    Clear();
 }
 BhServerApp& BhServerApp::Instance()
 {
@@ -30,11 +33,23 @@ bool BhServerApp::Init(const std::string &strIP, int nPort, int nListenCount, in
 }
 void BhServerApp::Clear()
 {
+    delete m_pThread;
+    m_pThread = nullptr;
+}
+bool BhServerApp::Start()
+{
+    m_bWantRun = true;
+    m_pThread = new boost::thread(boost::bind(&BhServerApp::Run, this));
 }
 void BhServerApp::Stop()
 {
     m_bWantRun = false;
 }
+void BhServerApp::Wait()
+{
+    m_pThread->join();
+}
+
 void BhServerApp::HandleMsg(int nEpoll, int nSock)
 {
     char *pBuf = new char[m_nBlockLength];
