@@ -14,7 +14,7 @@ std::string LoginRstMsg::ClassName() const
 }
 IMsg* LoginRstMsg::Clone() const
 {
-    return new LoginMsg(*this);
+    return new LoginRstMsg(*this);
 }
 bool LoginRstMsg::Success() const
 {

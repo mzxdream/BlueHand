@@ -14,7 +14,7 @@ public:
     typedef boost::shared_lock<RWMutex> ReadLock;
     typedef boost::unique_lock<RWMutex> WriteLock;
     
-    typedef boost::signals2::signal<void (const IMessage *)> SigType;
+    typedef boost::signals2::signal<void (const IMsg *)> SigType;
     typedef boost::ptr_unordered_map<std::string, SigType> SigPunmap;
 
 private:

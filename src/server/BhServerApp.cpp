@@ -1,12 +1,16 @@
 #include "BhServerApp.h"
 #include "../kernal/BhSocket.h"
 #include "../kernal/BhThreadPool.h"
+#include "../msg/IMsg.h"
+#include "../msg/MsgPacket.h"
+#include "../msg/MsgHandler.h"
 #include <sys/epoll.h>
 #include <errno.h>
 
 BhServerApp::BhServerApp()
-    : m_pThread(nullptr)
-    , m_bWantRun(true)
+    : m_bWantRun(true)
+    , m_pThread(nullptr)
+
 {
 }
 BhServerApp::~BhServerApp()
@@ -19,7 +23,7 @@ BhServerApp& BhServerApp::Instance()
     return instance;
 }
 bool BhServerApp::Init(const std::string &strIP, int nPort, int nListenCount, int nHandleCount
-		       , int nBLockLength, int nEpollTimeOut, int nMsgHeaderLen)
+		       , int nBlockLength, int nEpollTimeOut, int nMsgHeaderLen)
 {
     m_bWantRun = true;
     m_strIP = strIP;
@@ -40,6 +44,7 @@ bool BhServerApp::Start()
 {
     m_bWantRun = true;
     m_pThread = new boost::thread(boost::bind(&BhServerApp::Run, this));
+    return nullptr != m_pThread;
 }
 void BhServerApp::Stop()
 {
@@ -58,6 +63,7 @@ void BhServerApp::HandleMsg(int nEpoll, int nSock)
     event.events = EPOLLIN | EPOLLET;
     int nMsgLen = 0;
     int i = 0;
+    
     boost::ptr_unordered_map<int, BhMemeryPool>::iterator iter;
    
     while (m_bWantRun)
@@ -67,10 +73,10 @@ void BhServerApp::HandleMsg(int nEpoll, int nSock)
 	{
 	    if (errno == EAGAIN
 		|| errno == EWOULDBLOCK
-		|| errno == EINTER)
+		|| errno == EINTR)
 	    {
 		event.data.fd = nSock;
-		if (-1 == (epoll_ctl(efd, EPOLL_CTL_ADD, nSock, &event)))
+		if (-1 == (epoll_ctl(nEpoll, EPOLL_CTL_ADD, nSock, &event)))
 		{
 		    {
 			WriteLock lock(m_sockInfoMutex);
@@ -78,7 +84,7 @@ void BhServerApp::HandleMsg(int nEpoll, int nSock)
 		    }
 		    {
 			WriteLock lock(m_sockBufMutex);
-			m_sockBufMutex.erase(nSock);
+			m_sockBufPunmap.erase(nSock);
 		    }
 		    close(nSock);
 		}
@@ -120,32 +126,32 @@ void BhServerApp::HandleMsg(int nEpoll, int nSock)
 		close(nSock);
 		break;
 	    }
-	    iter->Write(pBuf, nReadLen);
+	    iter->second->Write(pBuf, nReadLen);
 	    while (m_bWantRun)
 	    {
-		if (iter->Length() > m_nMsgHeaderLen)//判断能否凑成一条完整的消息
+		if (iter->second->Length() > static_cast<unsigned>(m_nMsgHeaderLen))//判断能否凑成一条完整的消息
 		{
-		    if (iter->Read(pBuf, m_nMsgHeaderLen))
+		    if (iter->second->Read(pBuf, m_nMsgHeaderLen))
 		    {
-			nMsgLen = pMsgLen[0];
+			nMsgLen = pBuf[0];
 			for (i = 1; i < m_nMsgHeaderLen; ++i)
 			{
 			    nMsgLen <<= 8;
-			    nMsgLen += pMsgLen[i];
+			    nMsgLen += pBuf[i];
 			}
-			if (iter->Length() >= nMsgLen + m_nMsgHeaderLen)
+			if (iter->second->Length() >= static_cast<unsigned>(nMsgLen + m_nMsgHeaderLen))
 			{
-			    if (iter->Read(pBuf, nMsgLen + m_nMsgHeaderLen))
+			    if (iter->second->Read(pBuf, nMsgLen + m_nMsgHeaderLen))
 			    {
 				//处理信息
-				IMsg *pMsg = Msg::UnPack(pBuf + m_nMsgHeaderLen, nMsgLen);
+				IMsg *pMsg = MsgPacket::UnPack(pBuf + m_nMsgHeaderLen, nMsgLen);
 				if (pMsg)
 				{
 				    MsgHandler::Instance().Invoke(pMsg);
 				    delete pMsg;
 				}
 				//释放空间
-				iter->Free(nMsgLen + m_nMsgHeaderLen);
+				iter->second->Free(nMsgLen + m_nMsgHeaderLen);
 				continue;
 			    }
 			}
@@ -191,12 +197,12 @@ void BhServerApp::Run()
     event.events = EPOLLIN | EPOLLET;
     if (-1 == epoll_ctl(efd, EPOLL_CTL_ADD, nLisSock, &event))
     {
-	return 0;
+	return;
     }
     int nSock = 0;
     int i = 0;
     int nEventCount = 0;
-    struct sockaddr addr;
+    struct sockaddr_in addr;
     socklen_t nSockLen;
     BhThreadPool pool(m_nHandleCount);
     
@@ -213,7 +219,7 @@ void BhServerApp::Run()
 		while (m_bWantRun)
 		{
 		    nSockLen = sizeof(struct sockaddr);
-		    nSock = accept(nLisSock, &addr, &nSockLen);
+		    nSock = accept(nLisSock, (struct sockaddr *)&addr, &nSockLen);
 		    if (-1 == nSock)
 		    {
 			if ((errno != EAGAIN)
@@ -257,11 +263,11 @@ void BhServerApp::Run()
 		{
 		    {
 			WriteLock lock(m_sockBufMutex);
-			m_sockBufUnmap.erase(events[i].data.fd);
+			m_sockBufPunmap.erase(events[i].data.fd);
 		    }
 		    {
 			WriteLock lock(m_sockInfoMutex);
-			m_sockInfoMutex.erase(events[i].data.fd);
+			m_sockInfoPunmap.erase(events[i].data.fd);
 		    }
 		    close(events[i].data.fd);
 		}

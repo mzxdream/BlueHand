@@ -1,8 +1,10 @@
 #ifndef _LOGINRSTMSG_H_
 #define _LOGINRSTMSG_H_
 
+#include "INetMsg.h"
+
 class LoginRstMsg
-    :public INetMsg
+    : public INetMsg
 {
 public:
     LoginRstMsg();

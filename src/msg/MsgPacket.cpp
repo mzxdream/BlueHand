@@ -1,7 +1,7 @@
 #include "MsgPacket.h"
 #include <sstream>
 
-IMsg* MsgPacket::UnPack(const void *pBuf, int nLen)
+IMsg* MsgPacket::UnPack(const char *pBuf, int nLen)
 {
     if (pBuf == nullptr)
     {
@@ -14,7 +14,7 @@ IMsg* MsgPacket::UnPack(const void *pBuf, int nLen)
     ia >> pMsg;
     return pMsg;
 }
-void* MsgPacket::Packet(int &nLen, const IMsg* pMsg)
+char* MsgPacket::Packet(int &nLen, const IMsg* pMsg)
 {
     if (pMsg == nullptr)
     {
@@ -23,7 +23,7 @@ void* MsgPacket::Packet(int &nLen, const IMsg* pMsg)
     std::stringstream ss(std::ios::in | std::ios::out | std::ios::binary);
     boost::archive::binary_oarchive oa(ss);
     oa << pMsg;
-    nLen = ss.size();
+    nLen = ss.str().size();
     char *pBuf = new char[nLen];
     ss.seekp(0, std::ios::beg);
     ss.write(pBuf, nLen);

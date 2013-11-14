@@ -6,7 +6,7 @@ IMsg::~IMsg()
 {
 }
 
-std::string IMsg::GetClassName() const
+std::string IMsg::ClassName() const
 {
     return "IMsg";
 }

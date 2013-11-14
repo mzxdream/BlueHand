@@ -6,8 +6,8 @@
 class MsgPacket
 {
 public:
-    static IMsg* UnPack(const void *pBuf, int nLen);
-    static void* Packet(int nLen, const IMsg *pMsg);
+    static IMsg* UnPack(const char *pBuf, int nLen);
+    static char* Packet(int &nLen, const IMsg *pMsg);
 };
 
 

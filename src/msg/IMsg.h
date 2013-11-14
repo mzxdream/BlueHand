@@ -6,7 +6,8 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/string.hpp>
-#include <boost/type_traites/is_abstract.hpp>
+#include <boost/type_traits/is_abstract.hpp>
+#include <boost/serialization/export.hpp>
 #include <string>
 
 class IMsg
@@ -17,7 +18,7 @@ public:
     IMsg(const IMsg &) = default;
     IMsg& operator=(const IMsg &) = default;
 public:
-    virtual std::string GetClassName() const;
+    virtual std::string ClassName() const;
     virtual IMsg* Clone() const = 0;
 private:
     friend class boost::serialization::access;

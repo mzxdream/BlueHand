@@ -23,7 +23,7 @@ public:
     BhServerApp& operator=(const BhServerApp &) = delete;
 public:
     static BhServerApp& Instance();
-    bool Init(const std::string &strIP, int nPort, int nListenCount, int nHandleCount, int nBLockLength, int nEpollTimeOut, int nMsgHeaderLen);
+    bool Init(const std::string &strIP, int nPort, int nListenCount, int nHandleCount, int nBlockLength, int nEpollTimeOut, int nMsgHeaderLen);
     void Clear();
     bool Start();
     void Stop();
@@ -34,7 +34,7 @@ private:
 private:
     boost::ptr_unordered_map<int, BhMemeryPool> m_sockBufPunmap;//sock读取的内容
     RWMutex m_sockBufMutex;
-    boost::ptr_unorderd_map<int, BhSockInfo> m_sockInfoPunmap;//sock信息
+    boost::ptr_unordered_map<int, BhSockInfo> m_sockInfoPunmap;//sock信息
     RWMutex m_sockInfoMutex;
     std::string m_strIP;//绑定IP
     int m_nPort;//绑定端口
