@@ -27,8 +27,13 @@ BhMemeryPool::BhMemeryPool(const BhMemeryPool &obj)
 	++iter;
     }
 }
-BhMemeryPool& BhMemeryPool::operator=(const BhMemeryPool & obj)
+BhMemeryPool& BhMemeryPool::operator=(const BhMemeryPool &obj)
 {
+    if (this == &obj)
+    {
+	return *this;
+    }
+    Clear();
     m_uBlockLen = obj.m_uBlockLen;
     m_uBeginPos = obj.m_uBeginPos;
     m_uEndPos = obj.m_uEndPos;

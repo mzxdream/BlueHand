@@ -15,7 +15,10 @@ int main(int argc, char *argv[])
     {
 	return 0;
     }
-    BhServerApp::Instance().Start();
+    if (!BhServerApp::Instance().Start())
+    {
+	return 0;
+    }
     while (std::cin.get())
     {
 	BhServerApp::Instance().Stop();

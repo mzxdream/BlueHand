@@ -37,8 +37,11 @@ bool BhServerApp::Init(const std::string &strIP, int nPort, int nListenCount, in
 }
 void BhServerApp::Clear()
 {
-    delete m_pThread;
-    m_pThread = nullptr;
+    if (m_pThread)
+    {
+	delete m_pThread;
+	m_pThread = nullptr;
+    }
 }
 bool BhServerApp::Start()
 {
@@ -219,7 +222,7 @@ void BhServerApp::Run()
 		while (m_bWantRun)
 		{
 		    nSockLen = sizeof(struct sockaddr);
-		    nSock = accept(nLisSock, (struct sockaddr *)&addr, &nSockLen);
+		    nSock = accept(nLisSock, reinterpret_cast<struct sockaddr *>(&addr), &nSockLen);
 		    if (-1 == nSock)
 		    {
 			if ((errno != EAGAIN)
@@ -244,7 +247,7 @@ void BhServerApp::Run()
 				std::string strIP = inet_ntoa(addr.sin_addr);
 				int nPort = ntohs(addr.sin_port);
 				WriteLock lock(m_sockInfoMutex);
-				m_sockInfoPunmap.insert(nSock, new BhSockInfo(nSock, strIP, nPort));
+				m_sockInfoPunmap.insert(nSock, new BhSockInfo(nSock, strIP, nPort, 100));
 			    }
 			}
 			else

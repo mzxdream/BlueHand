@@ -1,17 +1,22 @@
-TARGET   	= ../../bin/server
-OBJ_DIR 	= ../../obj
-SRC		= $(wildcard *.cpp ../kernal/*.cpp ../msg/*.cpp) 
-OBJ	    	= $(patsubst %.cpp,%.o,$(SRC))
+OUTPUT_OBJ = ../../obj
+TARGET = server
+SOURCES = $(wildcard *.cpp ../kernal/*.cpp ../msg/*.cpp)
+DIR_OBJS = $(patsubst %.cpp,%.o,$(SOURCES))
+OBJS_NAME = $(notdir $(patsubst %.cpp,%.o,$(SOURCES)))
+OBJS = $(addprefix $(OUTPUT_OBJ)/,$(notdir $(patsubst %.cpp,%.o,$(SOURCES))))
 INCPATH		= -I. -I../kernal -I../msg
 LIBPATH		= -L. -lboost_thread -lboost_signals -lboost_filesystem -lboost_system -lboost_serialization
 LFLAGS          = -g -Wall
-CFLAGS		= -c -g -Wall
+CFLAGS		= -g -Wall -std=c++0x
 CC     	= g++
 
-$(TARGET) : $(OBJ)
-	$(CC) $(LFLAGS) $(OBJ) -o $@ @< $(LIBPATH)
-$(OBJ) : %.o : %.cpp
-	$(CC) $(CFLAGS) $< -o $@ $(INCPATH) -std=c++0x
+all:$(TARGET)
+$(TARGET):$(OBJS)
+	$(CC) $(OBJS) $(LFLAGS) -o $(TARGET) $(LIBPATH)
+$(OBJS):$(DIR_OBJS)
+$(DIR_OBJS):%.o : %.cpp
+	$(CC) $(CFLAGS) -o $@ -c  $<
+	mv $@ $(OUTPUT_OBJ)
+.PHONY:clean
 clean:
-	rm -f $(OBJ)
-	rm -f $(TARGET)
+	rm -rf $(OUTPUT_OBJ)/* $(TARGET)

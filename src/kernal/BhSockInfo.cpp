@@ -1,9 +1,14 @@
 #include "BhSockInfo.h"
 
-BhSockInfo::BhSockInfo(int nSock, const std::string &strIP, int nPort)
+BhSockInfo::BhSockInfo(int nSock, const std::string &strIP, int nPort, unsigned uBlockLen)
     : m_nSock(nSock)
     , m_strIP(strIP)
     , m_nPort(nPort)
+    , m_pool(uBlockLen)
+{
+}
+BhSockInfo::BhSockInfo(unsigned uBlockLen)
+    : m_pool(uBlockLen)
 {
 }
 int BhSockInfo::Sock() const
@@ -29,4 +34,8 @@ int BhSockInfo::Port() const
 void BhSockInfo::Port(int nPort)
 {
     m_nPort = nPort;
+}
+BhMemeryPool& BhSockInfo::Pool()
+{
+    return m_pool;
 }
