@@ -26,7 +26,7 @@ private:
     boost::thread_group m_threadGroup;
     boost::mutex m_taskMutex;
     boost::condition m_emptyCond;
-    bool m_bWantStop;
+    volatile bool m_bWantStop;
 };
 
 #endif

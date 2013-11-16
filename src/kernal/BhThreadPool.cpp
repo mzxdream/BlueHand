@@ -1,7 +1,7 @@
 #include "BhThreadPool.h"
 
 BhThreadPool::BhThreadPool(int nCount)
-    :m_bWantStop(false)
+    : m_bWantStop(false)
 {
     for (int i = 0; i < nCount; ++i)
     {
@@ -29,18 +29,17 @@ void BhThreadPool::PushTask(boost::function<void ()> func)
 void BhThreadPool::ThreadMain()
 {
     boost::function<void ()> func;
-    while (true)
+    while (!m_bWantStop)
     {
 	boost::mutex::scoped_lock lock(m_taskMutex);
-	while (m_taskList.empty())
+	while (m_taskList.empty() && !m_bWantStop)
 	{
 	    m_emptyCond.wait(lock);
 	}
-	if (m_bWantStop)
+	if (!m_bWantStop)
 	{
-	    return;
+	    (m_taskList.front())();//执行
+	    m_taskList.pop_front();
 	}
-	(m_taskList.front())();//执行
-	m_taskList.pop_front();
     }
 }

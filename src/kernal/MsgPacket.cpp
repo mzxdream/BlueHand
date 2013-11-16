@@ -3,7 +3,7 @@
 
 IMsg* MsgPacket::UnPack(const char *pBuf, int nLen)
 {
-    if (pBuf == nullptr)
+    if (pBuf == nullptr || nLen <= 0)
     {
 	return nullptr;
     }
@@ -11,7 +11,13 @@ IMsg* MsgPacket::UnPack(const char *pBuf, int nLen)
     ss.write(pBuf, nLen);
     boost::archive::binary_iarchive ia(ss);
     IMsg *pMsg = nullptr;
-    ia >> pMsg;
+    try
+    {
+	ia >> pMsg;
+    }
+    catch (...)
+    {
+    }
     return pMsg;
 }
 char* MsgPacket::Packet(int &nLen, const IMsg* pMsg)

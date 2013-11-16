@@ -17,11 +17,8 @@ public:
 public:
     unsigned NetID() const;
     void NetID(unsigned);
-    unsigned PacketNum() const;
-    void PacketNum(unsigned);
 private:
     unsigned m_uNetID;
-    unsigned m_uPacketNum;
 private:
     friend class boost::serialization::access;
     template<typename Archive>
@@ -33,6 +30,5 @@ void INetMsg::serialize(Archive &ar, const unsigned version)
 {
     ar & boost::serialization::base_object<IMsg>(*this);
     ar & m_uNetID;
-    ar & m_uPacketNum;
 }
 #endif

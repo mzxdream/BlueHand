@@ -4,7 +4,6 @@ BOOST_SERIALIZATION_ASSUME_ABSTRACT(INetMsg)
 
 INetMsg::INetMsg()
     : m_uNetID(0)
-    , m_uPacketNum(0)
 {
 }
 INetMsg::~INetMsg()
@@ -21,12 +20,4 @@ unsigned INetMsg::NetID() const
 void INetMsg::NetID(unsigned uNetID)
 {
     m_uNetID = uNetID;
-}
-unsigned INetMsg::PacketNum() const
-{
-    return m_uPacketNum;
-}
-void INetMsg::PacketNum(unsigned uPacketNum)
-{
-    m_uPacketNum = uPacketNum;
 }

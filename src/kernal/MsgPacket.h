@@ -1,7 +1,7 @@
 #ifndef _MSGPACKET_H_
 #define _MSGPACKET_H_
 
-#include "IMsg.h"
+#include "../msg/IMsg.h"
 
 class MsgPacket
 {

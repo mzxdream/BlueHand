@@ -20,10 +20,10 @@ int main(int argc, char *argv[])
     {
 	return 0;
     }
-    while (std::cin.get())
-    {
-	BhServerApp::Instance().Stop();
-    }
+    std::cin.get();
+    BhServerApp::Instance().Stop();
+    std::cout << "stop" << std::endl;
     BhServerApp::Instance().Wait();
+    std::cout << "wait end" << std::endl;
     return 0;
 }

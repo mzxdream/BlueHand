@@ -1,9 +1,9 @@
 #include "BhServerApp.h"
 #include "../kernal/BhSocket.h"
 #include "../kernal/BhThreadPool.h"
-#include "../msg/IMsg.h"
-#include "../msg/MsgPacket.h"
-#include "../msg/MsgHandler.h"
+#include "../kernal/MsgPacket.h"
+#include "../kernal/MsgHandler.h"
+#include "../msg/INetMsg.h"
 #include <sys/epoll.h>
 #include <errno.h>
 
@@ -23,14 +23,14 @@ BhServerApp& BhServerApp::Instance()
     return instance;
 }
 bool BhServerApp::Init(const std::string &strIP, int nPort, int nListenCount, int nHandleCount
-		       , int nBlockLength, int nEpollTimeOut, int nMsgHeaderLen)
+		       , unsigned uBlockLen, int nEpollTimeOut, int nMsgHeaderLen)
 {
     m_bWantRun = true;
     m_strIP = strIP;
     m_nPort = nPort;
     m_nListenCount = nListenCount;
     m_nHandleCount = nHandleCount;
-    m_nBlockLength = nBlockLength;
+    m_uBlockLen = uBlockLen;
     m_nEpollTimeOut = nEpollTimeOut;
     m_nMsgHeaderLen = nMsgHeaderLen;
     return true;
@@ -60,18 +60,18 @@ void BhServerApp::Wait()
 
 void BhServerApp::HandleMsg(int nEpoll, int nSock)
 {
-    char *pBuf = new char[m_nBlockLength];
+    char *pBuf = new char[m_uBlockLen];
     int nReadLen = 0;
     struct epoll_event event;
     event.events = EPOLLIN | EPOLLET;
     int nMsgLen = 0;
     int i = 0;
     
-    boost::ptr_unordered_map<int, BhMemeryPool>::iterator iter;
+    boost::ptr_unordered_map<int, BhSockInfo>::iterator iter;
    
     while (m_bWantRun)
     {
-	nReadLen = recv(nSock, pBuf, m_nBlockLength, 0);
+	nReadLen = recv(nSock, pBuf, m_uBlockLen, 0);
 	if (nReadLen < 0)//出错
 	{
 	    if (errno == EAGAIN
@@ -85,20 +85,12 @@ void BhServerApp::HandleMsg(int nEpoll, int nSock)
 			WriteLock lock(m_sockInfoMutex);
 			m_sockInfoPunmap.erase(nSock);
 		    }
-		    {
-			WriteLock lock(m_sockBufMutex);
-			m_sockBufPunmap.erase(nSock);
-		    }
 		    close(nSock);
 		}
 		break;
 	    }
 	    else
 	    {
-		{
-		    WriteLock lock(m_sockBufMutex);
-		    m_sockBufPunmap.erase(nSock);
-		}
 		{
 		    WriteLock lock(m_sockInfoMutex);
 		    m_sockInfoPunmap.erase(nSock);
@@ -110,10 +102,6 @@ void BhServerApp::HandleMsg(int nEpoll, int nSock)
 	else if (0 == nReadLen)
 	{
 	    {
-		WriteLock lock(m_sockBufMutex);
-		m_sockBufPunmap.erase(nSock);
-	    }
-	    {
 		WriteLock lock(m_sockInfoMutex);
 		m_sockInfoPunmap.erase(nSock);
 	    }
@@ -122,19 +110,13 @@ void BhServerApp::HandleMsg(int nEpoll, int nSock)
 	}
 	else
 	{
-	    ReadLock lock(m_sockBufMutex);
-	    iter = m_sockBufPunmap.find(nSock);
-	    if (iter == m_sockBufPunmap.end())
-	    {
-		close(nSock);
-		break;
-	    }
-	    iter->second->Write(pBuf, nReadLen);
+	    ReadLock lock(m_sockInfoMutex);
+	    iter->second->Pool().Write(pBuf, nReadLen);
 	    while (m_bWantRun)
 	    {
-		if (iter->second->Length() > static_cast<unsigned>(m_nMsgHeaderLen))//判断能否凑成一条完整的消息
+		if (iter->second->Pool().Length() > static_cast<unsigned>(m_nMsgHeaderLen))//判断能否凑成一条完整的消息
 		{
-		    if (iter->second->Read(pBuf, m_nMsgHeaderLen))
+		    if (iter->second->Pool().Read(pBuf, m_nMsgHeaderLen))
 		    {
 			nMsgLen = pBuf[0];
 			for (i = 1; i < m_nMsgHeaderLen; ++i)
@@ -142,19 +124,24 @@ void BhServerApp::HandleMsg(int nEpoll, int nSock)
 			    nMsgLen <<= 8;
 			    nMsgLen += pBuf[i];
 			}
-			if (iter->second->Length() >= static_cast<unsigned>(nMsgLen + m_nMsgHeaderLen))
+			if (iter->second->Pool().Length() >= static_cast<unsigned>(nMsgLen + m_nMsgHeaderLen))
 			{
-			    if (iter->second->Read(pBuf, nMsgLen + m_nMsgHeaderLen))
+			    if (iter->second->Pool().Read(pBuf, nMsgLen + m_nMsgHeaderLen))
 			    {
 				//处理信息
 				IMsg *pMsg = MsgPacket::UnPack(pBuf + m_nMsgHeaderLen, nMsgLen);
 				if (pMsg)
 				{
-				    MsgHandler::Instance().Invoke(pMsg);
+				    INetMsg *pNetMsg = dynamic_cast<INetMsg *>(pMsg);
+				    if (pNetMsg)
+				    {
+					pNetMsg->NetID(iter->second->Sock());
+					MsgHandler::Instance().Invoke(pMsg);
+				    }
 				    delete pMsg;
 				}
 				//释放空间
-				iter->second->Free(nMsgLen + m_nMsgHeaderLen);
+				iter->second->Pool().Free(nMsgLen + m_nMsgHeaderLen);
 				continue;
 			    }
 			}
@@ -239,16 +226,10 @@ void BhServerApp::Run()
 			if (BhSocket::SetNonBlock(nSock)
 			    && epoll_ctl(efd, EPOLL_CTL_ADD, nSock, &event) != -1)
 			{
-			    {
-				WriteLock lock(m_sockBufMutex);
-				m_sockBufPunmap.insert(nSock, new BhMemeryPool(m_nBlockLength));
-			    }
-			    {
-				std::string strIP = inet_ntoa(addr.sin_addr);
-				int nPort = ntohs(addr.sin_port);
-				WriteLock lock(m_sockInfoMutex);
-				m_sockInfoPunmap.insert(nSock, new BhSockInfo(nSock, strIP, nPort, 100));
-			    }
+			    std::string strIP = inet_ntoa(addr.sin_addr);
+			    int nPort = ntohs(addr.sin_port);
+			    WriteLock lock(m_sockInfoMutex);
+			    m_sockInfoPunmap.insert(nSock, new BhSockInfo(nSock, strIP, nPort, m_uBlockLen));
 			}
 			else
 			{
@@ -264,10 +245,6 @@ void BhServerApp::Run()
 		    || (events[i].events & EPOLLHUP)
 		    || (events[i].events & EPOLLIN))
 		{
-		    {
-			WriteLock lock(m_sockBufMutex);
-			m_sockBufPunmap.erase(events[i].data.fd);
-		    }
 		    {
 			WriteLock lock(m_sockInfoMutex);
 			m_sockInfoPunmap.erase(events[i].data.fd);
@@ -285,9 +262,10 @@ void BhServerApp::Run()
     close(efd);
     pool.Interrupt();
     pool.Join();
-    boost::ptr_unordered_map<int, BhMemeryPool>::iterator iter = m_sockBufPunmap.begin();
-    while (iter != m_sockBufPunmap.end())
+    boost::ptr_unordered_map<int, BhSockInfo>::iterator iter = m_sockInfoPunmap.begin();
+    while (iter != m_sockInfoPunmap.end())
     {
-	
+	close(iter->second->Sock());
+	iter = m_sockInfoPunmap.erase(iter);
     }
 }
