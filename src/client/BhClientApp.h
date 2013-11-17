@@ -1,21 +1,21 @@
-#ifndef _BLUEHANDAPP_H_
-#define _BLUEHANDAPP_H_
+#ifndef _BHCLIENTAPP_H_
+#define _BHCLIENTAPP_H_
 
 #include <gtkmm.h>
 #include <iostream>
 #include <string>
 #include "LoginWnd.h"
 
-class BlueHandApp
+class BhClientApp
 {
 private:
-    BlueHandApp() = default;
+    BhClientApp() = default;
 public:
-    BlueHandApp(const BlueHandApp &) = delete;
-    BlueHandApp& operator=(const BlueHandApp &) = delete;
-    ~BlueHandApp() = default;
+    BhClientApp(const BhClientApp &) = delete;
+    BhClientApp& operator=(const BhClientApp &) = delete;
+    ~BhClientApp() = default;
 public:
-    static BlueHandApp& Instance();
+    static BhClientApp& Instance();
     bool Init();
     void Clear();
     bool Run();
@@ -31,8 +31,6 @@ private:
     bool m_bAutoLogin;
     bool m_bRmbPwd;
     LoginWnd *m_pLoginWnd;
-    //loginSet
-    
 };
 
 #endif

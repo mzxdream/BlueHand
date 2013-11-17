@@ -1,13 +1,13 @@
-#include "BlueHandApp.h"
+#include "BhClientApp.h"
 #include "Conf.h"
 
-BlueHandApp& BlueHandApp::Instance()
+BhClientApp& BhClientApp::Instance()
 {
-    static BlueHandApp app;
+    static BhClientApp app;
     return app;
 }
 
-bool BlueHandApp::Init()
+bool BhClientApp::Init()
 {
     if (!InitLoginWnd())
     {
@@ -15,7 +15,7 @@ bool BlueHandApp::Init()
     }
     return true;
 }
-bool BlueHandApp::InitLoginWnd()
+bool BhClientApp::InitLoginWnd()
 {
     Glib::RefPtr<Gtk::Builder> refBuilder = Gtk::Builder::create();
     try
@@ -55,10 +55,15 @@ bool BlueHandApp::InitLoginWnd()
 	boost::bind(&BlueHandApp::OnLogin, this));
     return true;
 }
-void BlueHandApp::Clear()
+void BhClientApp::Clear()
 {
+    if (m_pLoginWnd)
+    {
+	delete m_pLoginWnd;
+	m_pLoginWnd = nullptr;
+    }
 }
-bool BlueHandApp::Run()
+bool BhClientApp::Run()
 {
     if (!m_pLoginWnd)
     {
@@ -67,11 +72,11 @@ bool BlueHandApp::Run()
     Gtk::Main::run(*m_pLoginWnd);
     return true;
 }
-void BlueHandApp::OnCancelLogin()
+void BhClientApp::OnCancelLogin()
 {
     std::cout << "cancel login" << std::endl;
 }
-void BlueHandApp::OnLogin()
+void BhClientApp::OnLogin()
 {
     m_strServerAddr = m_pLoginWnd->ServerAddr();
     m_strUserID = m_pLoginWnd->UserID();

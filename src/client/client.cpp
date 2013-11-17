@@ -1,24 +1,21 @@
-#include "BlueHandApp.h"
+#include "BhClientApp.h"
 #include <iostream>
 #include <gtkmm/main.h>
 
 int main(int argc, char *argv[])
 {
     Gtk::Main kit(argc, argv);
-    do
+
+    if (!BhClientApp::Instance().Init())
     {
-	if (!BlueHandApp::Instance().Init())
-	{
-	    std::cerr << "app init failed" << std::endl;
-	    break;
-	}
-	if (!BlueHandApp::Instance().Run())
-	{
-   	    std::cerr << "app run failed" << std::endl;
-	    break;
-	}
-    } while(false);
-    BlueHandApp::Instance().Clear();
+	return 0;
+    }
+    if (!BhClientApp::Instance().Run())
+    {
+	return 0;
+    }
+    std::cin.get();
+    BhClientApp::Instance().Clear();
     
     return 0;
 }
