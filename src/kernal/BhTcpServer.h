@@ -3,6 +3,11 @@
 
 #include "BhSocket.h"
 #include <string>
+#include <boost/ptr_container/ptr_unordered_map.hpp>
+#include "BhMemeryPool.h"
+#include <boost/thread.hpp>
+#include <boost/thread/shared_mutex.hpp>
+#include <boost/bind.hpp>
 
 class BhTcpServer
 {
@@ -14,6 +19,9 @@ public:
 public:
     bool Init();
     void Clear();
+    bool Start();
+    void Stop();
+    void Wait();
 private:
     int m_nListenSock;
     int m_nEpoll;
