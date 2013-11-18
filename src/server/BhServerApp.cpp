@@ -158,28 +158,6 @@ void BhServerApp::HandleMsg(int nEpoll, int nSock)
 }
 void BhServerApp::Run()
 {
-    BhSocket listenSock;
-    if (!listenSock.Create(SockType::TCP))
-    {
-	return;
-    }
-    if (!listenSock.Bind(m_nPort, m_strIP))
-    {
-	return;
-    }
-    if (!listenSock.SetNonBlock())
-    {
-	return;
-    }
-    if (!listenSock.Listen(m_nListenCount))
-    {
-	return;
-    }
-    int efd = 0;
-    if (-1 == (efd = epoll_create1(0)))
-    {
-	return;
-    }
     struct epoll_event event;
     struct epoll_event events[m_nListenCount + 1];
     int nLisSock = listenSock.Detach();
