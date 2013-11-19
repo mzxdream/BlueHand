@@ -8,6 +8,7 @@
 #include <boost/thread.hpp>
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/bind.hpp>
+#include <boost/function.hpp>
 
 class BhTcpServer
 {
@@ -15,8 +16,9 @@ public:
     typedef boost::shared_mutex RWMutex;
     typedef boost::shared_lock<RWMutex> ReadLock;
     typedef boost::unique_lock<RWMutex> WriteLock;
+    typedef boost::function<bool (BhMemeryPool &)> InvokeFunc;
 public:
-    BhTcpServer();
+    explicit BhTcpServer(const InvokeFunc &func);
     ~BhTcpServer();
     BhTcpServer& operator=(const BhTcpServer &) = delete;
     BhTcpServer(const BhTcpServer &) = delete;
@@ -26,6 +28,7 @@ public:
     bool Start();
     void Stop();
     void Wait();
+    void SetFunc(InvokeFunc func);
     void HandleMsg(int nSock);
 private:
     void Run();
@@ -39,8 +42,9 @@ private:
     int m_nEpollTimeOut;//epoll 超时
     int m_nThreadCount;//处理线程数量
     RWMutex m_sockInfoMutex;//sock锁
-    boost::ptr_list<BhSockInfo> m_sockInfoList;//
+    boost::ptr_list<BhSockInfo> m_sockInfoPlist;//
     bool m_bWantRun;
+    InvokeFunc m_funcInvoke;
 };
 
 #endif
