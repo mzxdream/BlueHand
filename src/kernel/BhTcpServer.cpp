@@ -1,14 +1,26 @@
 #include "BhTcpServer.h"
+#include "BhThreadPool.h"
+#include <sys/epoll.h>
+#include <error.h>
 
 BhTcpServer::BhTcpServer(const InvokeFunc &func)
-    : m_funcInvoke(func)
+    : m_pThread(nullptr)
+    , m_invokeFunc(func)
+{
+}
+BhTcpServer::BhTcpServer()
+    : m_pThread(nullptr)
 {
 }
 BhTcpServer::~BhTcpServer()
 {
+    Clear();
 }
-
-bool BhTcpServer::Init(const std::string &strIP, int nPort, int nListenCount, int nEpollCount, int nEpollTimeOut, int nThreadCount)
+void BhTcpServer::SetFunc(InvokeFunc func)
+{
+    m_invokeFunc = func;
+}
+bool BhTcpServer::Init(const std::string &strIP, int nPort, int nListenCount, int nEpollCount, int nEpollTimeOut, int nThreadCount, unsigned uBlockLen)
 {
     m_strIP = strIP;
     m_nPort = nPort;
@@ -16,28 +28,7 @@ bool BhTcpServer::Init(const std::string &strIP, int nPort, int nListenCount, in
     m_nEpollCount = nEpollCount;
     m_nEpollTimeOut = nEpollTimeOut;
     m_nThreadCount = nThreadCount;
-    BhSocket listenSock;
-     if (!listenSock.Create(SockType::TCP))
-    {
-	return false;
-    }
-    if (!listenSock.Bind(m_nPort, m_strIP))
-    {
-	return false;
-    }
-    if (!listenSock.SetNonBlock())
-    {
-	return false;
-    }
-    if (!listenSock.Listen(m_nListenCount))
-    {
-	return false;
-    }
-    m_nListenSock = listenSock.Detach();
-    if (-1 == (m_nEpoll = epoll_create1(0)))
-    {
-	return false;
-    }
+    m_uBlockLen = uBlockLen;
     return true;
 }
 void BhTcpServer::Clear()
@@ -48,7 +39,21 @@ void BhTcpServer::Clear()
 	m_pThread = nullptr;
     }
 }
-void BhTcpServer::HandleMsg(int nSock)
+void BhTcpServer::CloseSock(int nSock)
+{
+    WriteLock lock(m_sockInfoMutex);
+    boost::ptr_list<BhSockInfo>::iterator iter = m_sockInfoPlist.begin();
+    for (; iter != m_sockInfoPlist.end(); ++iter)
+    {
+	if (iter->Sock() == nSock)
+	{
+	    m_sockInfoPlist.erase(iter);
+	    close(nSock);
+	    break;
+	}
+    }
+}
+void BhTcpServer::HandleMsg(int nEpoll, int nSock)
 {
     char *pBuf = new char[m_uBlockLen];
     int nReadLen = 0;
@@ -62,35 +67,16 @@ void BhTcpServer::HandleMsg(int nSock)
 	{
 	    event.data.fd = nSock;
 	    if ((errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR)//如果当前错误码不是没有可写数据或者不能加入epoll
-		|| -1 == (epoll_ctl(m_nEpoll, EPOLL_CTL_ADD, nSock, &event)))
+		|| -1 == (epoll_ctl(nEpoll, EPOLL_CTL_ADD, nSock, &event)))
 	    {
-		WriteLock lock(m_sockInfoMutex);
-		boost::ptr_list<BhSockInfo>::iterator iter = m_sockInfoPlist.begin();
-		for (; iter != m_sockInfoPlist.end(); ++iter)
-		{
-		    if (iter->Sock() == nSock)
-		    {
-			m_sockInfoPlist.erase(iter);
-			close(nSock);
-			break;
-		    }
-		}
+		CloseSock(nSock);
 	    }
 	    break;
 	}
 	else if (0 == nReadLen)//对面关闭sock
 	{
-	    WriteLock lock(m_sockInfoMutex);
-	    boost::ptr_list<BhSockInfo>::iterator iter = m_sockInfoPlist.begin();
-	    for (; iter != m_sockInfoPlist.end(); ++iter)
-	    {
-		if (iter->Sock() == nSock)
-		{
-		    m_sockInfoPlist.erase(iter);
-		    close(nSock);
-		    break;
-		}
-	    }
+	    CloseSock(nSock);
+	    break;
 	}
 	else
 	{
@@ -103,7 +89,7 @@ void BhTcpServer::HandleMsg(int nSock)
 		    iter->Pool().Write(pBuf, nReadLen);
 		    while (m_bWantRun)
 		    {
-			if (!m_funcInvoke(iter->Pool()))
+			if (!m_invokeFunc(nSock, iter->Pool()))
 			{
 			    break;
 			}
@@ -118,11 +104,7 @@ void BhTcpServer::HandleMsg(int nSock)
 bool BhTcpServer::Start()
 {
     m_bWantRun = true;
-    if (m_pThread != nullptr)
-    {
-	delete m_pThread;
-    }
-    m_pThread = new boost::thread(boost::bind(&BhServerApp::Run, this));
+    m_pThread = new boost::thread(boost::bind(&BhTcpServer::Run, this));
     return nullptr != m_pThread;
 }
 void BhTcpServer::Stop()
@@ -139,39 +121,52 @@ void BhTcpServer::Wait()
 
 void BhTcpServer::Run()
 {
+    BhSocket listenSock;
+    if (!listenSock.Create(SockType::TCP)
+	|| !listenSock.Bind(m_nPort, m_strIP)
+	|| !listenSock.SetNonBlock()
+	|| !listenSock.Listen(m_nListenCount)
+	)
+    {
+	return;
+    }
+    int nEpoll = -1;
+    if (-1 == (nEpoll = epoll_create1(0)))
+    {
+	return;
+    }
+    int nListenSock = listenSock.Detach();
     struct epoll_event event;
     struct epoll_event events[m_nEpollCount + 1];
-    event.data.fd = m_nEpoll;
+    event.data.fd = nEpoll;
     event.events = EPOLLIN | EPOLLET;
-    if (-1 == epoll_ctl(m_nEpoll, EPOLL_CTL_ADD, m_nListenSock, &event))
+    if (-1 == epoll_ctl(nEpoll, EPOLL_CTL_ADD, nListenSock, &event))
     {
 	return;
     }
     int nSock = 0;
-    int i = 0;
     int nEventCount = 0;
+    int i = 0;
     struct sockaddr_in addr;
-    socklen_t nSockLen;
+    socklen_t sockLen = sizeof(struct sockaddr);
     BhThreadPool pool(m_nThreadCount);
     
     while (m_bWantRun)
     {
-	if ((nEventCount = epoll_wait(m_nEpoll, events, m_nEpollCount + 1, m_nEpollTimeOut)) < 0)
+	if ((nEventCount = epoll_wait(nEpoll, events, m_nEpollCount + 1, m_nEpollTimeOut)) < 0)
 	{
 	    break;
 	}
 	for (i = 0; i < nEventCount; ++i)
 	{
-	    if (m_nListenSock == events[i].data.fd)
+	    if (nListenSock == events[i].data.fd)
 	    {
 		while (m_bWantRun)
 		{
-		    nSockLen = sizeof(struct sockaddr);
-		    nSock = accept(m_nListenSock, reinterpret_cast<struct sockaddr *>(&addr), &nSockLen);
+		    nSock = accept(nListenSock, reinterpret_cast<struct sockaddr *>(&addr), &sockLen);
 		    if (-1 == nSock)
 		    {
-			if ((errno != EAGAIN)
-			    && (errno != EWOULDBLOCK))
+			if ((errno != EAGAIN) && (errno != EWOULDBLOCK))
 			{
 			    m_bWantRun = false;
 			    break;
@@ -181,8 +176,7 @@ void BhTcpServer::Run()
 		    {
 			event.data.fd = nSock;
 			event.events = EPOLLIN | EPOLLET;
-			if (BhSocket::SetNonBlock(nSock)
-			    && epoll_ctl(m_nEpoll, EPOLL_CTL_ADD, nSock, &event) != -1)
+			if (BhSocket::SetNonBlock(nSock) && epoll_ctl(nEpoll, EPOLL_CTL_ADD, nSock, &event) != -1)
 			{
 			    std::string strIP = inet_ntoa(addr.sin_addr);
 			    int nPort = ntohs(addr.sin_port);
@@ -199,31 +193,19 @@ void BhTcpServer::Run()
 	    }
 	    else
 	    {
-		if ((events[i].events & EPOLLERR)
-		    || (events[i].events & EPOLLHUP)
-		    || !(events[i].events & EPOLLIN))
+		if ((events[i].events & EPOLLERR) || (events[i].events & EPOLLHUP) || !(events[i].events & EPOLLIN))
 		{
-		    WriteLock lock(m_sockInfoMutex);
-		    boost::ptr_list<BhSockInfo>::iterator iter = m_sockInfoPlist.begin();
-		    for (; iter != m_sockInfoPlist.end(); ++iter)
-		    {
-			if (iter->Sock() == events[i].data.fd)
-			{
-			    m_sockInfoPlist.erase(iter);
-			    close(events[i].data.fd);
-			    break;
-			}
-		    }
+		    CloseSock(nSock);
 		}
 		else
 		{
-		    epoll_ctl(m_nEpoll, EPOLL_CTL_DEL, events[i].data.fd, nullptr);
-		    pool.PushTask(boost::bind(&BhTcpServer::HandleMsg, this, events[i].data.fd));
+		    epoll_ctl(nEpoll, EPOLL_CTL_DEL, events[i].data.fd, nullptr);
+		    pool.PushTask(boost::bind(&BhTcpServer::HandleMsg, this, nEpoll, events[i].data.fd));
 		}
 	    }
 	}
     }
-    close(m_nEpoll);
+    close(nEpoll);
     pool.Interrupt();
     pool.Join();
     boost::ptr_list<BhSockInfo>::iterator iter = m_sockInfoPlist.begin();
