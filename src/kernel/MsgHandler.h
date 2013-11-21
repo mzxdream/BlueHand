@@ -24,7 +24,6 @@ private:
     MsgHandler& operator=(const MsgHandler &) = delete;
 public:
     static MsgHandler& Instance();
-    bool Init();
     void Clear();
     void Connect(const std::string &, void (*)(const IMsg *));
     

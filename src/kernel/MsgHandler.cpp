@@ -5,10 +5,6 @@ MsgHandler& MsgHandler::Instance()
     static MsgHandler handler;
     return handler;
 }
-bool MsgHandler::Init()
-{
-    return true;
-}
 void MsgHandler::Clear()
 {
     WriteLock writeLock(m_rwMutex);

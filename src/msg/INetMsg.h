@@ -2,6 +2,7 @@
 #define _INETMSG_H_
 
 #include "IMsg.h"
+#include <string>
 
 class INetMsg
     :public IMsg
@@ -15,10 +16,10 @@ public:
     virtual std::string ClassName() const;
     virtual IMsg* Clone() const = 0;
 public:
-    unsigned NetID() const;
-    void NetID(unsigned);
+    const std::string& NetID() const;
+    void NetID(const std::string &strNetID);
 private:
-    unsigned m_uNetID;
+    std::string m_strNetID;//登陆成功，由服务器发过来的唯一标识
 private:
     friend class boost::serialization::access;
     template<typename Archive>
@@ -29,6 +30,6 @@ template<typename Archive>
 void INetMsg::serialize(Archive &ar, const unsigned version)
 {
     ar & boost::serialization::base_object<IMsg>(*this);
-    ar & m_uNetID;
+    ar & m_strNetID;
 }
 #endif

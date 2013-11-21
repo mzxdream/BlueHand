@@ -1,5 +1,6 @@
 #include "BhServerApp.h"
-#include "../kernel/MsgPacket.h"
+#include "../kernel/NetMsgPacket.h"
+#include "../kernel/MsgHandler.h"
 
 BhServerApp::BhServerApp()
 {
@@ -47,16 +48,15 @@ bool BhServerApp::HandleSockBuf(int nSock, BhMemeryPool &pool)
     int nMsgLen = 0;
     if (pool.Read(reinterpret_cast<char *>(&nMsgLen), sizeof(int)))
     {
-	char pBuf = new char[sizeof(int) + nMsgLen];
+	char *pBuf = new char[sizeof(int) + nMsgLen];
 	if (pool.Read(pBuf, nMsgLen + sizeof(int)))
 	{
-	    IMsg *pMsg = MsgPacket::UnPack(pBuf + sizeof(int), nMsgLen);
+	    INetMsg *pMsg = NetMsgPacket::UnPack(pBuf + sizeof(int), nMsgLen);
 	    if (pMsg)
 	    {
-		INetMsg *pNetMsg = dynamic_cast<INetMsg *>(pMsg);
-		if (pNetMsg)
-		{
-		}
+		MsgHandler::Instance().Invoke(pMsg);
+		delete pMsg;
+		return true;
 	    }
 	}
 	delete pBuf;

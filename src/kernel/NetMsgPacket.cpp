@@ -1,7 +1,7 @@
-#include "MsgPacket.h"
+#include "NetMsgPacket.h"
 #include <sstream>
 
-IMsg* MsgPacket::UnPack(const char *pBuf, int nLen)
+INetMsg* NetMsgPacket::UnPack(const char *pBuf, int nLen)
 {
     if (pBuf == nullptr || nLen <= 0)
     {
@@ -10,7 +10,7 @@ IMsg* MsgPacket::UnPack(const char *pBuf, int nLen)
     std::stringstream ss(std::ios::in | std::ios::out | std::ios::binary);
     ss.write(pBuf, nLen);
     boost::archive::binary_iarchive ia(ss);
-    IMsg *pMsg = nullptr;
+    INetMsg *pMsg = nullptr;
     try
     {
 	ia >> pMsg;
@@ -20,7 +20,7 @@ IMsg* MsgPacket::UnPack(const char *pBuf, int nLen)
     }
     return pMsg;
 }
-char* MsgPacket::Packet(int &nLen, const IMsg* pMsg)
+char* NetMsgPacket::Packet(int &nLen, const INetMsg *pMsg)
 {
     if (pMsg == nullptr)
     {

@@ -8,11 +8,11 @@ int main(int argc, char *argv[])
     std::string strIP = "";
     int nPort = 3230;
     int nListenCount = 5000;
-    int nHandleCount = 20;
-    int nBlockLength = 10;
-    int nEpollTimeOut = 500;
-    int nMsgHeaderLen = 2;
-    if (!BhServerApp::Instance().Init(strIP, nPort, nListenCount, nHandleCount, nBlockLength, nEpollTimeOut, nMsgHeaderLen))
+    int nEpollCount = 100;
+    int nEpollTimeOut = 100;
+    int nThreadCount = 20;
+    unsigned  uBlockLen = 10;
+    if (!BhServerApp::Instance().Init(strIP, nPort, nListenCount, nEpollCount, nEpollTimeOut, nThreadCount, uBlockLen))
     {
 	return 0;
     }

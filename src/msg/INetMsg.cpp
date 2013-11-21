@@ -3,7 +3,6 @@
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(INetMsg)
 
 INetMsg::INetMsg()
-    : m_uNetID(0)
 {
 }
 INetMsg::~INetMsg()
@@ -13,11 +12,11 @@ std::string INetMsg::ClassName() const
 {
     return "INetMsg";
 }
-unsigned INetMsg::NetID() const
+const std::string& INetMsg::NetID() const
 {
-    return m_uNetID;
+    return m_strNetID;
 }
-void INetMsg::NetID(unsigned uNetID)
+void INetMsg::NetID(const std::string &strNetID)
 {
-    m_uNetID = uNetID;
+    m_strNetID = strNetID;
 }
