@@ -3,6 +3,8 @@
 
 #include "INetMsg.h"
 
+enum class LoginRstType{ErrorID, ErrorPassword, Success};
+
 class LoginRstMsg
     : public INetMsg
 {
@@ -12,13 +14,13 @@ public:
     LoginRstMsg(const LoginRstMsg &) = default;
     LoginRstMsg& operator=(const LoginRstMsg &) = default;
 public:
-    virtual std::string ClassName() const;
-    virtual IMsg* Clone() const;
+    virtual std::string ClassName() const override;
+    virtual IMsg* Clone() const override;
 public:
-    bool Success() const;
-    void Success(bool);
+    LoginRstType Type() const;
+    void Type(LoginRstType type);
 private:
-    bool m_bSuccess;
+    LoginRstType m_type;//登陆结果
 private:
     friend class boost::serialization::access;
     template<typename Archive>
@@ -29,7 +31,7 @@ template<typename Archive>
 void LoginRstMsg::serialize(Archive &ar, const unsigned version)
 {
     ar & boost::serialization::base_object<INetMsg>(*this);
-    ar & m_bSuccess;
+    ar & m_type;
 }
 
 #endif

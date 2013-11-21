@@ -6,8 +6,8 @@ LoginMsg::LoginMsg()
 {
 }
 LoginMsg::LoginMsg(const std::string &strUserID, const std::string &strUserPwd)
-    :m_strUserID(strUserID)
-    ,m_strUserPwd(strUserPwd)
+    : m_strUserID(strUserID)
+    , m_strUserPwd(strUserPwd)
 {
 }
 LoginMsg::~LoginMsg()

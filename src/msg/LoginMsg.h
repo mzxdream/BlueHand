@@ -4,17 +4,17 @@
 #include "INetMsg.h"
 
 class LoginMsg
-    :public INetMsg
+    : public INetMsg
 {
 public:
     LoginMsg();
-    LoginMsg(const std::string &, const std::string &);
+    explicit LoginMsg(const std::string &strUserID, const std::string &strUserPwd);
     virtual ~LoginMsg();
     LoginMsg(const LoginMsg &) = default;
     LoginMsg& operator=(const LoginMsg &) = default;
 public:
-    virtual std::string ClassName() const;
-    virtual IMsg* Clone() const;
+    virtual std::string ClassName() const override;
+    virtual IMsg* Clone() const override;
 public:
     const std::string& UserID() const;
     void UserID(const std::string &);

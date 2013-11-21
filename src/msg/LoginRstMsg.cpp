@@ -16,11 +16,11 @@ IMsg* LoginRstMsg::Clone() const
 {
     return new LoginRstMsg(*this);
 }
-bool LoginRstMsg::Success() const
+LoginRstType LoginRstMsg::Type() const
 {
-    return m_bSuccess;
+    return m_type;
 }
-void LoginRstMsg::Success(bool bSuccess)
+void LoginRstMsg::Type(LoginRstType type)
 {
-    m_bSuccess = bSuccess;
+    m_type = type;
 }

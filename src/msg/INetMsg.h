@@ -13,8 +13,8 @@ public:
     INetMsg(const INetMsg &) = default;
     INetMsg& operator=(const INetMsg &) = default;
 public:
-    virtual std::string ClassName() const;
-    virtual IMsg* Clone() const = 0;
+    virtual std::string ClassName() const override;
+    virtual IMsg* Clone() const override = 0;
 public:
     const std::string& NetID() const;
     void NetID(const std::string &strNetID);
