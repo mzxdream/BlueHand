@@ -1,20 +1,20 @@
-#ifndef _BHSERVERAPP_H_
-#define _BHSERVERAPP_H_
+#ifndef _LOGINSERVERAPP_H_
+#define _LOGINSERVERAPP_H_
 
 #include <string>
 #include <boost/thread.hpp>
 #include "../kernel/BhTcpServer.h"
 
-class BhServerApp
+class LoginServerApp
 {
 private:
-    BhServerApp();
+    LoginServerApp();
 public:
-    ~BhServerApp();
-    BhServerApp(const BhServerApp &) = delete;
-    BhServerApp& operator=(const BhServerApp &) = delete;
+    ~LoginServerApp();
+    LoginServerApp(const LoginServerApp &) = delete;
+    LoginServerApp& operator=(const LoginServerApp &) = delete;
 public:
-    static BhServerApp& Instance();
+    static LoginServerApp& Instance();
     bool Init(const std::string &strIP, int nPort, int nListenCount, int nEpollCount, int nEpollTimeOut, int nThreadCount, unsigned uBlockLen);
     void Clear();
     bool Start();

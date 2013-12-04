@@ -1,33 +1,33 @@
-#include "BhServerApp.h"
+#include "LoginServerApp.h"
 #include "../kernel/NetMsgPacket.h"
 #include "../kernel/MsgHandler.h"
 
-BhServerApp::BhServerApp()
+LoginServerApp::LoginServerApp()
 {
 }
-BhServerApp::~BhServerApp()
+LoginServerApp::~LoginServerApp()
 {
     Clear();
 }
-BhServerApp& BhServerApp::Instance()
+LoginServerApp& LoginServerApp::Instance()
 {
-    static BhServerApp instance;
+    static LoginServerApp instance;
     return instance;
 }
-bool BhServerApp::Init(const std::string &strIP, int nPort, int nListenCount, int nEpollCount, int nEpollTimeOut, int nThreadCount, unsigned uBlockLen)
+bool LoginServerApp::Init(const std::string &strIP, int nPort, int nListenCount, int nEpollCount, int nEpollTimeOut, int nThreadCount, unsigned uBlockLen)
 {
     if (!m_tcpServer.Init(strIP, nPort, nListenCount, nEpollCount, nEpollTimeOut, nThreadCount, uBlockLen))
     {
 	return false;
     }
-    m_tcpServer.SetFunc(boost::bind(&BhServerApp::HandleSockBuf, this, _1, _2));
+    m_tcpServer.SetFunc(boost::bind(&LoginServerApp::HandleSockBuf, this, _1, _2));
     return true;
 }
-void BhServerApp::Clear()
+void LoginServerApp::Clear()
 {
     m_tcpServer.Clear();
 }
-bool BhServerApp::Start()
+bool LoginServerApp::Start()
 {
     if (!m_tcpServer.Start())
     {
@@ -35,15 +35,15 @@ bool BhServerApp::Start()
     }
     return true;
 }
-void BhServerApp::Stop()
+void LoginServerApp::Stop()
 {
     m_tcpServer.Stop();
 }
-void BhServerApp::Wait()
+void LoginServerApp::Wait()
 {
     m_tcpServer.Wait();
 }
-bool BhServerApp::HandleSockBuf(int nSock, BhMemeryPool &pool)
+bool LoginServerApp::HandleSockBuf(int nSock, BhMemeryPool &pool)
 {
     int nMsgLen = 0;
     if (pool.Read(reinterpret_cast<char *>(&nMsgLen), sizeof(int)))
@@ -54,7 +54,6 @@ bool BhServerApp::HandleSockBuf(int nSock, BhMemeryPool &pool)
 	    INetMsg *pMsg = NetMsgPacket::UnPack(pBuf + sizeof(int), nMsgLen);
 	    if (pMsg)
 	    {
-		MsgHandler::Instance().Invoke(pMsg);
 		delete pMsg;
 		return true;
 	    }
