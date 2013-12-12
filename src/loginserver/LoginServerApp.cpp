@@ -54,6 +54,7 @@ bool LoginServerApp::HandleSockBuf(int nSock, BhMemeryPool &pool)
 	    INetMsg *pMsg = NetMsgPacket::UnPack(pBuf + sizeof(int), nMsgLen);
 	    if (pMsg)
 	    {
+		LoginMsg
 		delete pMsg;
 		return true;
 	    }

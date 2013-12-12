@@ -20,9 +20,11 @@ public:
     bool Start();
     void Stop();
     void Wait();
-    bool HandleSockBuf(int nSock, BhMemeryPool &pool);
+    bool HandleLoginSockBuf(int nSock, BhMemeryPool &pool);
+    bool HandleCenterSockBuf(int nSock, BhMemeryPool &pool);
 private:
-    BhTcpServer m_tcpServer;
+    BhTcpServer m_loginServer;//对用户的登录进行处理
+    BhTcpServer m_centerServer;//对中心服务器的处理
 };
 
 #endif
